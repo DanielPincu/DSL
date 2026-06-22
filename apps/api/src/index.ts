@@ -30,15 +30,9 @@ app.use(
   })
 );
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
-app.use(limiter);
+// Rate limiting — generous per-minute limits
+app.use('/api/auth', rateLimit({ windowMs: 60 * 1000, max: 40 }));
+app.use('/api', rateLimit({ windowMs: 60 * 1000, max: 80 }));
 
 // Body parsing
 app.use(express.json({ limit: '10kb' }));
