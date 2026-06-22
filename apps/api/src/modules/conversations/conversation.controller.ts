@@ -171,14 +171,17 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
     );
 
     let aiFeedback: AIFeedback;
+    let aiFailed = false;
     try {
       aiFeedback = await provider.generateJSON<AIFeedback>(aiPrompt);
-    } catch {
+    } catch (err) {
+      aiFailed = true;
+      console.warn('AI provider failed, using fallback:', err instanceof Error ? err.message : 'unknown error');
       aiFeedback = {
         npcReply: 'Hej! Det lyder godt. Fortæl mig mere.',
         corrections: [],
-        feedback: 'Keep going!',
-        score: 70,
+        feedback: '',
+        score: 50,
         detectedMistakes: [],
         passed: true,
         passedReason: '',
