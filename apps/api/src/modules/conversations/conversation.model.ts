@@ -1,9 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import type { Message, ConversationStatus } from '@dls/shared';
+import type { Message, ConversationStatus, Language } from '@dls/shared';
 
 export interface IConversation extends Document {
   userId: mongoose.Types.ObjectId;
   missionId: mongoose.Types.ObjectId;
+  language: Language;
   messages: Message[];
   status: ConversationStatus;
   finalScore?: number;
@@ -24,23 +25,15 @@ const conversationSchema = new Schema<IConversation>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     missionId: { type: Schema.Types.ObjectId, ref: 'Mission', required: true },
+    language: { type: String, enum: ['da', 'es'], required: true, default: 'da' },
     messages: [messageSchema],
-    status: {
-      type: String,
-      enum: ['active', 'completed'],
-      default: 'active',
-    },
+    status: { type: String, enum: ['active', 'completed'], default: 'active' },
     finalScore: { type: Number, min: 0, max: 100 },
   },
   {
     timestamps: true,
     versionKey: false,
-    toJSON: {
-      transform(_doc, ret) {
-        ret.id = ret._id.toString();
-        return ret;
-      },
-    },
+    toJSON: { transform(_doc, ret) { ret.id = ret._id.toString(); return ret; } },
   }
 );
 

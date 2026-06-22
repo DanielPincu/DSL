@@ -124,17 +124,19 @@ export async function overridePlacement(req: AuthRequest, res: Response): Promis
     const userId = req.userId!;
     const { selectedLevel } = req.body;
 
+    const user = await User.findById(userId);
+    const lang = user?.activeLanguage || 'da';
     await User.findByIdAndUpdate(userId, {
-      selectedLevel,
-      levelSource: 'user_override',
-      placementCompleted: true,
+      [`progress.${lang}.selectedLevel`]: selectedLevel,
+      [`progress.${lang}.levelSource`]: 'user_override',
+      [`progress.${lang}.placementCompleted`]: true,
     });
 
-    const user = await User.findById(userId);
+    const updatedUser = await User.findById(userId);
 
     res.json({
       success: true,
-      data: user?.toJSON(),
+      data: updatedUser?.toJSON(),
     });
   } catch (error) {
     console.error('Override placement error:', error);

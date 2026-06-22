@@ -178,9 +178,16 @@ export function buildConversationAIPrompt(
   npcRole: string,
   scenarioPrompt: string,
   level: CEFRLevel,
-  conversationHistory: Message[]
+  conversationHistory: Message[],
+  language: string = 'da'
 ): string {
-  return `You are ${npcName}, a ${npcRole} in Denmark. You are helping someone practice Danish.
+  const isSpanish = language === 'es';
+  const targetLang = isSpanish ? 'Spanish' : 'Danish';
+  const countryName = isSpanish ? 'Spain' : 'Denmark';
+  const confusedReply = isSpanish
+    ? '"Lo siento, no entiendo inglés. ¿Puedes decirlo en español?"'
+    : '"Undskyld, jeg forstår ikke engelsk. Kan du sige det på dansk?"';
+  return `You are ${npcName}, a ${npcRole} in ${countryName}. You are helping someone practice ${targetLang}.
 
 Scenario: ${scenarioPrompt}
 User's approximate level: ${level}
@@ -218,8 +225,8 @@ Important RULES:
 - npcReply must feel like a real conversation with a Dane, not a lesson
 - If the user made ANY mistake, ALWAYS include it in the corrections array
 - corrections should be [] ONLY if the user wrote perfect Danish
-- score 0-100: reflect overall quality of the user's Danish
-- If the user says "farvel" or goodbye, set passed to true ONLY if the user demonstrated sufficient Danish for their level (${level}) in this scenario.
+- score 0-100: reflect overall quality of the user's ${targetLang}
+- If the user says "farvel" or goodbye, set passed to true ONLY if the user demonstrated sufficient ${targetLang} for their level (${level}) in this scenario.
   Evaluate: did they use appropriate vocabulary? Did they form understandable sentences?
   Did they complete the scenario goal? Was it a meaningful conversation?
   CONTEXT CHECK: Did the user actually talk about the scenario topic?

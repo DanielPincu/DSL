@@ -75,7 +75,7 @@ export default function MissionDetail() {
 
   if (!mission) return null;
 
-  const activeLevel = user ? getActiveLevel(user) : null;
+  const activeLevel = user ? getActiveLevel(user, user.activeLanguage) : null;
 
   return (
     <div className="max-w-3xl mx-auto">

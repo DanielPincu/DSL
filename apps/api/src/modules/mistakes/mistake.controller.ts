@@ -1,13 +1,16 @@
 import { Response } from 'express';
 import type { AuthRequest } from '../../middleware/auth.js';
+import User from '../users/user.model.js';
 import Mistake from './mistake.model.js';
 
 export async function getMyMistakes(req: AuthRequest, res: Response): Promise<void> {
   try {
     const userId = req.userId!;
+    const user = await User.findById(userId);
+    const lang = user?.activeLanguage || 'da';
     const { type, mastered, page, limit } = req.query;
 
-    const filter: Record<string, unknown> = { userId };
+    const filter: Record<string, unknown> = { userId, language: lang };
 
     if (type && typeof type === 'string') {
       filter.type = type;

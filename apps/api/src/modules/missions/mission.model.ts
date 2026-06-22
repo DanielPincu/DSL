@@ -1,9 +1,10 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import type { CEFRLevel, MissionCategory } from '@dls/shared';
+import type { CEFRLevel, MissionCategory, Language } from '@dls/shared';
 
 export interface IMission extends Document {
   title: string;
   slug: string;
+  language: Language;
   category: MissionCategory;
   level: CEFRLevel;
   order: number;
@@ -20,19 +21,14 @@ const missionSchema = new Schema<IMission>(
   {
     title: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
+    language: { type: String, enum: ['da', 'es'], required: true, default: 'da' },
     category: {
       type: String,
-      enum: [
-        'health', 'housing', 'shopping', 'work', 'social',
-        'technology', 'education', 'government', 'finance', 'citizenship',
-      ],
+      enum: ['health', 'housing', 'shopping', 'work', 'social',
+        'technology', 'education', 'government', 'finance', 'citizenship'],
       required: true,
     },
-    level: {
-      type: String,
-      enum: ['A1', 'A2', 'B1', 'B2', 'C1'],
-      required: true,
-    },
+    level: { type: String, enum: ['A1', 'A2', 'B1', 'B2', 'C1'], required: true },
     description: { type: String, required: true },
     scenarioPrompt: { type: String, required: true },
     npcName: { type: String, required: true },
@@ -43,12 +39,7 @@ const missionSchema = new Schema<IMission>(
   {
     timestamps: true,
     versionKey: false,
-    toJSON: {
-      transform(_doc, ret) {
-        ret.id = ret._id.toString();
-        return ret;
-      },
-    },
+    toJSON: { transform(_doc, ret) { ret.id = ret._id.toString(); return ret; } },
   }
 );
 

@@ -1,10 +1,11 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import type { Correction, MistakeType } from '@dls/shared';
+import type { Correction, Language } from '@dls/shared';
 
 export interface IAttempt extends Document {
   userId: mongoose.Types.ObjectId;
   missionId: mongoose.Types.ObjectId;
   conversationId: mongoose.Types.ObjectId;
+  language: Language;
   userInput: string;
   aiReply: string;
   corrections: Correction[];
@@ -28,6 +29,7 @@ const attemptSchema = new Schema<IAttempt>(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     missionId: { type: Schema.Types.ObjectId, ref: 'Mission', required: true },
     conversationId: { type: Schema.Types.ObjectId, ref: 'Conversation', required: true },
+    language: { type: String, enum: ['da', 'es'], required: true, default: 'da' },
     userInput: { type: String, required: true },
     aiReply: { type: String, required: true },
     corrections: [correctionSchema],
@@ -37,12 +39,7 @@ const attemptSchema = new Schema<IAttempt>(
   {
     timestamps: { createdAt: true, updatedAt: false },
     versionKey: false,
-    toJSON: {
-      transform(_doc, ret) {
-        ret.id = ret._id.toString();
-        return ret;
-      },
-    },
+    toJSON: { transform(_doc, ret) { ret.id = ret._id.toString(); return ret; } },
   }
 );
 

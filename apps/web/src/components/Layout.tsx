@@ -1,6 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
+import { api } from '../api/client';
+import { LANGUAGE_FLAGS, LANGUAGE_LABELS } from '@dls/shared';
+import type { Language } from '@dls/shared';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: '🏠' },
@@ -11,9 +14,10 @@ const navItems = [
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [switchingLang, setSwitchingLang] = useState(false);
   const [darkMode, setDarkMode] = useState(
     () => localStorage.getItem('theme') === 'dark' ||
       (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
@@ -26,21 +30,37 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.toggle('dark', next);
   };
 
+  const switchLanguage = async (lang: Language) => {
+    if (lang === user?.activeLanguage || switchingLang) return;
+    setSwitchingLang(true);
+    try {
+      await api.patch('/auth/language', { language: lang });
+      await refreshUser();
+      window.location.reload();
+    } catch {
+      // ignore
+    } finally {
+      setSwitchingLang(false);
+    }
+  };
+
   // Initialize dark mode
   useState(() => {
     document.documentElement.classList.toggle('dark', darkMode);
   });
 
+  const currentLang = user?.activeLanguage || 'da';
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-danish-dark">
+    <div className="min-h-screen bg-gray-50 dark:bg-danish-dark text-gray-900 dark:text-white">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-danish-dark/80 backdrop-blur-lg border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
             <Link to="/dashboard" className="flex items-center gap-2">
-              <span className="text-2xl">🇩🇰</span>
+              <span className="text-2xl">{currentLang === 'es' ? '🇪🇸' : '🇩🇰'}</span>
               <span className="font-display font-bold text-lg text-gray-900 dark:text-white">
-                Danish Life
+                {currentLang === 'es' ? 'Spanish Life' : 'Danish Life'}
               </span>
             </Link>
 
@@ -65,7 +85,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               })}
             </nav>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              {/* Language switcher */}
+              {user && (
+                <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  {(['da', 'es'] as Language[]).map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => switchLanguage(lang)}
+                      disabled={switchingLang}
+                      className={`px-2 py-1.5 text-xs font-medium transition-colors ${
+                        currentLang === lang
+                          ? 'bg-danish-red text-white'
+                          : 'bg-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      {LANGUAGE_FLAGS[lang]} {LANGUAGE_LABELS[lang]}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {/* Dark mode toggle */}
               <button
                 onClick={toggleDark}

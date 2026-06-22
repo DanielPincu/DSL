@@ -10,7 +10,7 @@ export default function Profile() {
 
   if (!user) return null;
 
-  const activeLevel = getActiveLevel(user);
+  const activeLevel = getActiveLevel(user, user.activeLanguage);
 
   async function handleOverrideLevel(level: CEFRLevel) {
     setSaving(true);
@@ -61,7 +61,7 @@ export default function Profile() {
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
             <p className="text-gray-500 dark:text-gray-400">Estimated Level</p>
             <p className="font-bold text-lg text-gray-900 dark:text-white">
-              {user.estimatedLevel || 'Not assessed'}
+              {user.progress[user.activeLanguage]?.estimatedLevel || 'Not assessed'}
             </p>
           </div>
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
@@ -73,13 +73,13 @@ export default function Profile() {
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
             <p className="text-gray-500 dark:text-gray-400">Level Source</p>
             <p className="font-semibold text-gray-900 dark:text-white capitalize">
-              {user.levelSource?.replace('_', ' ') || 'N/A'}
+              {user.progress[user.activeLanguage]?.levelSource?.replace('_', ' ') || 'N/A'}
             </p>
           </div>
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
             <p className="text-gray-500 dark:text-gray-400">Placement</p>
             <p className="font-semibold text-gray-900 dark:text-white">
-              {user.placementCompleted ? '✅ Completed' : '❌ Not done'}
+              {user.progress[user.activeLanguage]?.placementCompleted ? '✅ Completed' : '❌ Not done'}
             </p>
           </div>
         </div>
@@ -110,11 +110,11 @@ export default function Profile() {
       </div>
 
       {/* Strengths & Weaknesses */}
-      {user.strengths.length > 0 && (
+      {user.progress[user.activeLanguage]?.strengths.length > 0 && (
         <div className="card">
           <h2 className="font-semibold text-gray-900 dark:text-white mb-3">💪 Strengths</h2>
           <div className="flex flex-wrap gap-2">
-            {user.strengths.map((s, i) => (
+            {user.progress[user.activeLanguage]?.strengths.map((s, i) => (
               <span key={i} className="badge bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
                 {s}
               </span>
@@ -123,11 +123,11 @@ export default function Profile() {
         </div>
       )}
 
-      {user.weaknesses.length > 0 && (
+      {user.progress[user.activeLanguage]?.weaknesses.length > 0 && (
         <div className="card">
           <h2 className="font-semibold text-gray-900 dark:text-white mb-3">📚 Areas to Improve</h2>
           <div className="flex flex-wrap gap-2">
-            {user.weaknesses.map((w, i) => (
+            {user.progress[user.activeLanguage]?.weaknesses.map((w, i) => (
               <span key={i} className="badge bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">
                 {w}
               </span>

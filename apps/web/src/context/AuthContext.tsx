@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import type { User } from '@dls/shared';
+import type { User, Language, LanguageProgress } from '@dls/shared';
+
+export function getCurrentProgress(user: User | null, lang?: Language): LanguageProgress {
+  if (!user) return { placementCompleted: false, strengths: [], weaknesses: [] };
+  const l = lang || user.activeLanguage;
+  return user.progress?.[l] || { placementCompleted: false, strengths: [], weaknesses: [] };
+}
 import { api } from '../api/client';
 
 interface AuthContextType {

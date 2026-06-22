@@ -18,24 +18,26 @@ export const LEVEL_SOURCES = ['assessment', 'user_override'] as const;
 export type LevelSource = (typeof LEVEL_SOURCES)[number];
 
 export const MISSION_CATEGORIES = [
-  'health',
-  'housing',
-  'shopping',
-  'work',
-  'social',
-  'technology',
-  'education',
-  'government',
-  'finance',
-  'citizenship',
+  'health', 'housing', 'shopping', 'work', 'social',
+  'technology', 'education', 'government', 'finance', 'citizenship',
 ] as const;
 export type MissionCategory = (typeof MISSION_CATEGORIES)[number];
 
-// User
-export interface User {
-  id: string;
-  email: string;
-  name: string;
+export const LANGUAGES = ['da', 'es'] as const;
+export type Language = (typeof LANGUAGES)[number];
+
+export const LANGUAGE_LABELS: Record<Language, string> = {
+  da: 'Dansk',
+  es: 'Español',
+};
+
+export const LANGUAGE_FLAGS: Record<Language, string> = {
+  da: '🇩🇰',
+  es: '🇪🇸',
+};
+
+// User — per-language progress
+export interface LanguageProgress {
   estimatedLevel?: CEFRLevel;
   selectedLevel?: CEFRLevel;
   levelSource?: LevelSource;
@@ -44,14 +46,33 @@ export interface User {
   target?: LearningTarget;
   strengths: string[];
   weaknesses: string[];
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  activeLanguage: Language;
+  progress: Record<string, LanguageProgress>;
   createdAt: string;
   updatedAt: string;
 }
 
-export type ActiveLevel = CEFRLevel;
+export function getActiveLevel(user: Pick<User, 'progress'> | null, language: Language): CEFRLevel | null {
+  if (!user) return null;
+  const p = user.progress?.[language];
+  if (!p) return null;
+  return p.selectedLevel ?? p.estimatedLevel ?? null;
+}
 
-export function getActiveLevel(user: Pick<User, 'estimatedLevel' | 'selectedLevel'>): CEFRLevel | null {
-  return user.selectedLevel ?? user.estimatedLevel ?? null;
+export function getLanguageProgress(user: Pick<User, 'progress'> | null, language: Language): LanguageProgress {
+  const defaultProgress: LanguageProgress = {
+    placementCompleted: false,
+    strengths: [],
+    weaknesses: [],
+  };
+  if (!user?.progress?.[language]) return defaultProgress;
+  return { ...defaultProgress, ...user.progress[language] };
 }
 
 // Placement
@@ -73,6 +94,7 @@ export interface Mission {
   title: string;
   slug: string;
   category: MissionCategory;
+  language: Language;
   level: CEFRLevel;
   order: number;
   description: string;
@@ -102,6 +124,7 @@ export interface Conversation {
   id: string;
   userId: string;
   missionId: string;
+  language: Language;
   messages: Message[];
   status: ConversationStatus;
   finalScore?: number;
@@ -122,6 +145,7 @@ export interface Attempt {
   userId: string;
   missionId: string;
   conversationId: string;
+  language: Language;
   userInput: string;
   aiReply: string;
   corrections: Correction[];
@@ -147,6 +171,7 @@ export interface Mistake {
   userId: string;
   missionId: string;
   conversationId: string;
+  language: Language;
   originalText: string;
   correctedText: string;
   explanation: string;
@@ -184,4 +209,6 @@ export interface DashboardData {
     description: string;
     date: string;
   }[];
+  activeLanguage: Language;
+  availableLanguages: Language[];
 }

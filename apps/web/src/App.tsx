@@ -22,7 +22,8 @@ function HomeRedirect() {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  if (!user.placementCompleted) return <Navigate to="/placement" replace />;
+  const prog = user.progress?.[user.activeLanguage];
+    if (!prog?.placementCompleted) return <Navigate to="/placement" replace />;
 
   return <Navigate to="/dashboard" replace />;
 }

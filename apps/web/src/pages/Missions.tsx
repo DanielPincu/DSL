@@ -60,7 +60,7 @@ export default function Missions() {
       .finally(() => setLoading(false));
   }, []);
 
-  const activeLevel = user ? getActiveLevel(user) : null;
+  const activeLevel = user ? getActiveLevel(user, user.activeLanguage) : null;
 
   if (loading) return <LoadingSpinner text="Loading missions..." />;
 

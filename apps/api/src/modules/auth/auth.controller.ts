@@ -31,7 +31,16 @@ export async function register(req: AuthRequest, res: Response): Promise<void> {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await User.create({ email, passwordHash, name });
+    const user = await User.create({
+      email,
+      passwordHash,
+      name,
+      activeLanguage: 'da',
+      progress: {
+        da: { placementCompleted: false, strengths: [], weaknesses: [] },
+        es: { placementCompleted: false, strengths: [], weaknesses: [] },
+      },
+    });
     const token = generateToken(user._id.toString());
     setTokenCookie(res, token);
 
@@ -77,6 +86,32 @@ export async function login(req: AuthRequest, res: Response): Promise<void> {
 export async function logout(_req: AuthRequest, res: Response): Promise<void> {
   res.clearCookie('token', { path: '/' });
   res.json({ success: true, data: { message: 'Logged out successfully' } });
+}
+
+export async function switchLanguage(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { language } = req.body;
+    if (!['da', 'es'].includes(language)) {
+      res.status(400).json({ success: false, error: 'Invalid language' });
+      return;
+    }
+    const user = await User.findById(req.userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+    // Initialize progress for this language if not exists
+    if (!user.progress?.[language]) {
+      user.progress = user.progress || {};
+      user.progress[language] = { placementCompleted: false, strengths: [], weaknesses: [] };
+    }
+    user.activeLanguage = language as 'da' | 'es';
+    await user.save();
+    res.json({ success: true, data: user.toJSON() });
+  } catch (error) {
+    console.error('Switch language error:', error);
+    res.status(500).json({ success: false, error: 'Failed to switch language' });
+  }
 }
 
 export async function getMe(req: AuthRequest, res: Response): Promise<void> {

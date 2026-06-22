@@ -40,7 +40,7 @@ export default function Placement() {
 
   useEffect(() => {
     // Redirect if already completed
-    if (user?.placementCompleted) {
+    if (user?.progress?.[user.activeLanguage]?.placementCompleted) {
       navigate('/dashboard');
       return;
     }
