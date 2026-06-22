@@ -8,7 +8,7 @@ import User from '../users/user.model.js';
 import { getActiveLevel } from '@dls/shared';
 import { getAIProvider, buildConversationAIPrompt } from '../ai/ai.service.js';
 import type { AIFeedback, CEFRLevel } from '@dls/shared';
-import mongoose from 'mongoose';
+import { getLevelMissionsWithLock } from '../missions/mission.controller.js';
 
 const NEXT_LEVEL: Record<string, CEFRLevel | null> = {
   A1: 'A2',
@@ -83,6 +83,17 @@ export async function startConversation(req: AuthRequest, res: Response): Promis
       res.status(403).json({
         success: false,
         error: `This mission is level ${mission.level}. Your current level is ${activeLevel}. Complete all ${activeLevel} missions first.`,
+      });
+      return;
+    }
+
+    // Check strict linear progression within the level
+    const { missions } = await getLevelMissionsWithLock(userId, activeLevel);
+    const prog = missions.find((m) => m.id === missionId);
+    if (prog?.locked) {
+      res.status(403).json({
+        success: false,
+        error: prog.lockedReason || 'Complete the previous mission first',
       });
       return;
     }

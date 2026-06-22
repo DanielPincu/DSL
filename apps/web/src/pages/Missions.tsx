@@ -20,16 +20,21 @@ const LEVEL_COLORS: Record<CEFRLevel, string> = {
   C1: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
 };
 
+interface MissionWithStatus extends Mission {
+  locked: boolean;
+  lockedReason?: string;
+  completed: boolean;
+}
+
 interface MissionsResponse {
-  missions: Mission[];
+  missions: MissionWithStatus[];
   progress: MissionLevelProgress;
 }
 
 export default function Missions() {
   const { user } = useAuth();
-  const [missions, setMissions] = useState<Mission[]>([]);
+  const [missions, setMissions] = useState<MissionWithStatus[]>([]);
   const [progress, setProgress] = useState<MissionLevelProgress | null>(null);
-  const [completedSet, setCompletedSet] = useState<Set<string>>(new Set());
   const [activeConvs, setActiveConvs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
@@ -41,19 +46,15 @@ export default function Missions() {
       setMissions(missionsData.missions);
       setProgress(missionsData.progress);
 
-      const completed: Set<string> = new Set();
       const activeMap: Record<string, string> = {};
-
       for (const conv of convsData) {
-        const mId = typeof conv.missionId === 'string'
-          ? conv.missionId
-          : (conv.missionId as Record<string, string>)?.id || (conv.missionId as Record<string, string>)?._id || '';
-
-        if (conv.status === 'active' && mId) activeMap[mId] = conv.id;
-        if (conv.status === 'completed' && mId) completed.add(mId);
+        if (conv.status === 'active') {
+          const mId = typeof conv.missionId === 'string'
+            ? conv.missionId
+            : (conv.missionId as Record<string, string>)?.id || (conv.missionId as Record<string, string>)?._id || '';
+          if (mId) activeMap[mId] = conv.id;
+        }
       }
-
-      setCompletedSet(completed);
       setActiveConvs(activeMap);
     }).catch(console.error)
       .finally(() => setLoading(false));
@@ -70,7 +71,7 @@ export default function Missions() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Missions 🎯</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Complete all missions at your level to advance to the next
+            Complete missions in order to unlock the next one
           </p>
         </div>
         {activeLevel && (
@@ -99,7 +100,7 @@ export default function Missions() {
           </div>
           {progress.allDone && (
             <div className="mt-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-3 rounded-xl text-sm text-center font-medium">
-              🎉 All {progress.level} missions complete! Complete a conversation with "farvel" to advance to the next level.
+              🎉 All {progress.level} missions complete! Say "farvel" to advance to {progress.level === 'C1' ? 'the end' : progress.level === 'A1' ? 'A2' : progress.level === 'A2' ? 'B1' : progress.level === 'B1' ? 'B2' : 'C1'}.
             </div>
           )}
         </div>
@@ -114,26 +115,28 @@ export default function Missions() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {missions.map((mission) => {
-            const isCompleted = completedSet.has(mission.id);
             const activeConvId = activeConvs[mission.id];
+            const isLocked = mission.locked && !activeConvId;
+            const isCompleted = mission.completed;
 
-            return (
-            <Link
-              key={mission.slug}
-              to={activeConvId ? `/missions/${mission.slug}/conversation/${activeConvId}` : `/missions/${mission.slug}`}
-              className={`${isCompleted ? 'card opacity-70' : 'card-hover group'}`}
-            >
+            const cardContent = (
+              <>
               <div className="flex items-start justify-between mb-3">
-                <span className="text-3xl">{CATEGORY_ICONS[mission.category] || '🎯'}</span>
+                <span className="text-3xl">{isLocked ? '🔒' : isCompleted ? '✅' : CATEGORY_ICONS[mission.category] || '🎯'}</span>
                 <div className="flex gap-1.5">
+                  {activeConvId && (
+                    <span className="badge bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs">
+                      In Progress 💬
+                    </span>
+                  )}
+                  {isLocked && (
+                    <span className="badge bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs">
+                      Locked 🔒
+                    </span>
+                  )}
                   {isCompleted && (
                     <span className="badge bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs">
                       ✅ Done
-                    </span>
-                  )}
-                  {activeConvId && !isCompleted && (
-                    <span className="badge bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs">
-                      In Progress 💬
                     </span>
                   )}
                 </div>
@@ -160,13 +163,34 @@ export default function Missions() {
                 <span className="text-sm text-gray-400">{mission.npcRole}</span>
               </div>
 
-              <div className="mt-3 inline-flex items-center gap-1 text-sm font-medium transition-opacity">
-                {isCompleted && <span className="text-green-600 dark:text-green-400">View →</span>}
+              <div className="mt-3 inline-flex items-center gap-1 text-sm font-medium">
+                {isLocked && (
+                  <span className="text-gray-400 text-xs">{mission.lockedReason || 'Locked'}</span>
+                )}
+                {isCompleted && <span className="text-green-600 dark:text-green-400">Review →</span>}
                 {activeConvId && !isCompleted && <span className="text-danish-red">Continue →</span>}
-                {!activeConvId && !isCompleted && (
+                {!activeConvId && !isCompleted && !isLocked && (
                   <span className="text-danish-red opacity-0 group-hover:opacity-100">Start mission →</span>
                 )}
               </div>
+              </>
+            );
+
+            if (isLocked) {
+              return (
+                <div key={mission.slug} className="card opacity-60 cursor-not-allowed group">
+                  {cardContent}
+                </div>
+              );
+            }
+
+            return (
+            <Link
+              key={mission.slug}
+              to={activeConvId ? `/missions/${mission.slug}/conversation/${activeConvId}` : `/missions/${mission.slug}`}
+              className={`${isCompleted ? 'card opacity-70' : 'card-hover group'}`}
+            >
+              {cardContent}
             </Link>
             );
           })}
