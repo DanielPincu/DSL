@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy via SSH with password
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -21,6 +21,6 @@ jobs:
             git pull
             cd apps/api && npx tsc && cd ..
             cd apps/web && npx vite build && cd ..
-            echo '${{ secrets.VPS_SUDO_PASS }}' | sudo -S cp -r apps/web/dist/* /var/www/html/
-            echo '${{ secrets.VPS_SUDO_PASS }}' | sudo -S chown -R www-data:www-data /var/www/html/
+            echo '${{ secrets.VPS_PASSWORD }}' | sudo -S cp -r apps/web/dist/* /var/www/html/
+            echo '${{ secrets.VPS_PASSWORD }}' | sudo -S chown -R www-data:www-data /var/www/html/
             pm2 restart dls-api
