@@ -165,14 +165,13 @@ export default function Mistakes() {
 
                 <button
                   onClick={() => toggleMastered(mistake.id)}
-                  className={`shrink-0 p-2 rounded-lg transition-colors ${
+                  className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
                     mistake.mastered
                       ? 'bg-gray-100 dark:bg-gray-700 text-gray-400'
-                      : 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100'
+                      : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50'
                   }`}
-                  title={mistake.mastered ? 'Mark as unmastered' : 'Mark as mastered'}
                 >
-                  {mistake.mastered ? '↩️' : '✅'}
+                  {mistake.mastered ? '↩️ Undo mastered' : '✅ Mark as mastered'}
                 </button>
               </div>
             </div>
