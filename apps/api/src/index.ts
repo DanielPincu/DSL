@@ -30,9 +30,17 @@ app.use(
   })
 );
 
-// Rate limiting — generous per-minute limits
-app.use('/api/auth', rateLimit({ windowMs: 60 * 1000, max: 40 }));
-app.use('/api', rateLimit({ windowMs: 60 * 1000, max: 80 }));
+// Rate limiting — generous per-minute limits with JSON responses
+function jsonRateLimiter(opts: { windowMs: number; max: number }) {
+  return rateLimit({
+    ...opts,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, error: 'Too many requests, please slow down' },
+  });
+}
+app.use('/api/auth', jsonRateLimiter({ windowMs: 60 * 1000, max: 40 }));
+app.use('/api', jsonRateLimiter({ windowMs: 60 * 1000, max: 80 }));
 
 // Body parsing
 app.use(express.json({ limit: '10kb' }));
