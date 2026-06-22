@@ -87,22 +87,19 @@ export default function MissionConversation() {
         { message: userMsg }
       );
 
+      if (data.reset) {
+        setResetMessage(data.reason || 'Prøv igen!');
+        setSending(false);
+        return;
+      }
+
       setMessages((prev) => [...prev, { role: 'assistant', content: data.aiReply }]);
-      setShowCorrections(data.corrections);
-      setLastFeedback(data.feedback);
-      setLastScore(data.score);
+      setShowCorrections(data.corrections || []);
+      setLastFeedback(data.feedback || '');
+      setLastScore(data.score || 0);
 
       if (data.autoPromoted) {
         setPromoted(data.autoPromoted);
-      }
-
-      if (data.reset) {
-        // Show the fail reason and redirect after a moment
-        setResetMessage(data.reason || 'Prøv igen!');
-        setTimeout(() => {
-          navigate(`/missions/${slug}`);
-        }, 3000);
-        return;
       }
 
       if (data.conversationComplete) {
