@@ -140,7 +140,7 @@ export default function MissionConversation() {
   if (loading) return <LoadingSpinner text="Loading conversation..." />;
   if (!conversation && !resetMessage) {
     return (
-      <div className="h-[calc(100vh-4rem)] flex items-center justify-center -mx-4 sm:-mx-6">
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
         <div className="text-center">
           <span className="text-5xl block mb-4">🔍</span>
           <p className="text-gray-500 dark:text-gray-400 mb-4">Conversation not found</p>
@@ -159,7 +159,7 @@ export default function MissionConversation() {
   const missionName = convMission && typeof convMission === 'object' ? (convMission as { npcName: string }).npcName : '';
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col -mx-4 sm:-mx-6">
+    <div className="max-w-4xl mx-auto h-[calc(100vh-4rem)] flex flex-col">
       {/* Header */}
       <div className="bg-white dark:bg-danish-card border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center gap-3">
         <button
