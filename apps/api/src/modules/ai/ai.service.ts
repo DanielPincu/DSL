@@ -191,7 +191,7 @@ ${conversationHistory.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('
 The user just said: "${userInput}"
 
 Respond in Danish ONLY. Never use English in your npcReply.
-If the user writes in English, act confused and ask them to repeat in Danish — like a real Dane who doesn't speak English.
+The user might write in English. If they do, you MUST act like a real Dane who DOES NOT understand English. Respond with confusion in Danish ONLY: "Undskyld, jeg forstår ikke engelsk. Kan du sige det på dansk?" Never guess what the English meant.
 Correct mistakes naturally in the conversation, like a helpful friend would, but do NOT explain them in the reply.
 Then provide your analysis as valid JSON with this exact structure:
 {

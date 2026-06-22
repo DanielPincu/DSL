@@ -37,6 +37,7 @@ export default function MissionConversation() {
   const [lastScore, setLastScore] = useState(0);
   const [complete, setComplete] = useState(false);
   const [notPassedReason, setNotPassedReason] = useState<string | null>(null);
+  const [resetMessage, setResetMessage] = useState<string | null>(null);
   const [promoted, setPromoted] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -83,7 +84,11 @@ export default function MissionConversation() {
       }
 
       if (data.reset) {
-        navigate(`/missions/${slug}`);
+        // Show the fail reason and redirect after a moment
+        setResetMessage(data.reason || 'Prøv igen!');
+        setTimeout(() => {
+          navigate(`/missions/${slug}`);
+        }, 3000);
         return;
       }
 
@@ -201,6 +206,20 @@ export default function MissionConversation() {
               </div>
               <span className="text-sm font-bold text-danish-red">{lastScore}%</span>
             </div>
+          </div>
+        )}
+
+        {/* Reset message — shown briefly before redirect */}
+        {resetMessage && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-5 text-center animate-pulse-slow">
+            <span className="text-4xl block mb-2">💪</span>
+            <h3 className="font-bold text-gray-900 dark:text-white mb-1">Not quite there yet</h3>
+            <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
+              {resetMessage}
+            </p>
+            <p className="text-xs text-yellow-500 dark:text-yellow-400">
+              Starting fresh — try again!
+            </p>
           </div>
         )}
 
