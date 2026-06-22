@@ -34,7 +34,7 @@ export default function Mistakes() {
       if (typeFilter !== 'all') params.set('type', typeFilter);
       if (masteredFilter !== 'all') params.set('mastered', masteredFilter === 'mastered' ? 'true' : 'false');
       params.set('page', String(page));
-      params.set('limit', '20');
+      params.set('limit', '10');
 
       const data = await api.get<{
         mistakes: Mistake[];
@@ -55,10 +55,17 @@ export default function Mistakes() {
   }, [typeFilter, masteredFilter, page]);
 
   async function toggleMastered(id: string) {
+    // Optimistic update — no page refresh
+    setMistakes((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, mastered: !m.mastered } : m))
+    );
     try {
       await api.patch(`/mistakes/${id}/mastered`);
-      fetchMistakes();
     } catch (e) {
+      // Revert on error
+      setMistakes((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, mastered: !m.mastered } : m))
+      );
       console.error(e);
     }
   }
@@ -177,25 +184,41 @@ export default function Mistakes() {
             </div>
           ))}
 
-          {/* Pagination */}
+          {/* Pagination with page numbers */}
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-6">
+            <div className="flex items-center justify-center gap-1.5 mt-6">
               <button
                 disabled={page <= 1}
                 onClick={() => setPage(page - 1)}
-                className="btn-secondary text-sm"
+                className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                ← Previous
+                ←
               </button>
-              <span className="flex items-center text-sm text-gray-500">
-                Page {page} of {totalPages}
-              </span>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+                .map((p, idx, arr) => (
+                  <span key={p} className="flex items-center">
+                    {idx > 0 && arr[idx - 1] !== p - 1 && (
+                      <span className="px-1 text-gray-400 text-xs">...</span>
+                    )}
+                    <button
+                      onClick={() => setPage(p)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        p === page
+                          ? 'bg-danish-red text-white shadow-sm'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  </span>
+                ))}
               <button
                 disabled={page >= totalPages}
                 onClick={() => setPage(page + 1)}
-                className="btn-secondary text-sm"
+                className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                Next →
+                →
               </button>
             </div>
           )}
