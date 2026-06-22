@@ -225,7 +225,7 @@ Important RULES:
 - npcReply must feel like a real conversation with a ${countryName === "Spain" ? "Spaniard" : "Dane"}, not a lesson
 - If the user made ANY mistake, ALWAYS include it in the corrections array
 - corrections should be [] ONLY if the user wrote perfect ${targetLang}
-- score 0-100: reflect overall quality of the user's ${targetLang}
+- score 0-100: reflect the user's ${targetLang} proficiency in this message. SCORE STRICTLY: a simple "hello" is 10-20. A full sentence with correct grammar is 60-80. Complex, nuanced language is 80-100. Never give 100 unless the user produced advanced, error-free Danish/Spanish with good vocabulary.
 - If the user says "farvel" or goodbye, set passed to true ONLY if the user demonstrated sufficient ${targetLang} for their level (${level}) in this scenario.
   Evaluate: did they use appropriate vocabulary? Did they form understandable sentences?
   Did they complete the scenario goal? Was it a meaningful conversation?
