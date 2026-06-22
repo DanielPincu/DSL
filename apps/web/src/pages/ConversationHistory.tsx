@@ -5,7 +5,7 @@ import type { Conversation, Mission } from '@dls/shared';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 interface PopulatedConversation extends Omit<Conversation, 'missionId'> {
-  missionId: Pick<Mission, 'title' | 'slug' | 'category' | 'level'>;
+  missionId: (Pick<Mission, 'title' | 'slug' | 'category' | 'level'>) | string | null;
 }
 
 export default function ConversationHistory() {
@@ -50,15 +50,19 @@ export default function ConversationHistory() {
                 🟢 Active Conversations
               </h2>
               <div className="space-y-3">
-                {activeConversations.map((conv) => (
+                {activeConversations.map((conv) => {
+                  const missionTitle = typeof conv.missionId === 'object' && conv.missionId ? conv.missionId.title : 'Unknown Mission';
+                  const missionSlug = typeof conv.missionId === 'object' && conv.missionId ? conv.missionId.slug : '';
+
+                  return (
                   <Link
                     key={conv.id}
-                    to={`/missions/${conv.missionId.slug}/conversation/${conv.id}`}
-                    className="card-hover flex items-center justify-between"
+                    to={missionSlug ? `/missions/${missionSlug}/conversation/${conv.id}` : '#'}
+                    className={`card-hover flex items-center justify-between ${!missionSlug ? 'pointer-events-none' : ''}`}
                   >
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white">
-                        {conv.missionId.title}
+                        {missionTitle}
                       </h3>
                       <p className="text-sm text-gray-500">
                         {conv.messages.filter((m) => m.role !== 'system').length} messages
@@ -67,7 +71,8 @@ export default function ConversationHistory() {
                     </div>
                     <span className="text-danish-red text-sm font-medium">Continue →</span>
                   </Link>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -79,15 +84,19 @@ export default function ConversationHistory() {
                 ✅ Completed
               </h2>
               <div className="space-y-3">
-                {completedConversations.map((conv) => (
+                {completedConversations.map((conv) => {
+                  const missionTitle = typeof conv.missionId === 'object' && conv.missionId ? conv.missionId.title : 'Unknown Mission';
+                  const missionSlug = typeof conv.missionId === 'object' && conv.missionId ? conv.missionId.slug : '';
+
+                  return (
                   <Link
                     key={conv.id}
-                    to={`/missions/${conv.missionId.slug}/conversation/${conv.id}`}
-                    className="card flex items-center justify-between opacity-80 hover:opacity-100 transition-opacity"
+                    to={missionSlug ? `/missions/${missionSlug}/conversation/${conv.id}` : '#'}
+                    className={`card flex items-center justify-between opacity-80 hover:opacity-100 transition-opacity ${!missionSlug ? 'pointer-events-none' : ''}`}
                   >
                     <div>
                       <h3 className="font-semibold text-gray-900 dark:text-white">
-                        {conv.missionId.title}
+                        {missionTitle}
                       </h3>
                       <p className="text-sm text-gray-500">
                         {conv.messages.filter((m) => m.role !== 'system').length} messages
@@ -97,7 +106,8 @@ export default function ConversationHistory() {
                     </div>
                     <span className="text-xs text-gray-400">Review →</span>
                   </Link>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
