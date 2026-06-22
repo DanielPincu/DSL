@@ -4,8 +4,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
-import { env, validateEnv } from './config/env.js';
-import { connectDB } from './config/db.js';
+import { env, validateEnv } from './config/env.js';import { connectDB } from './config/db.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Routes
