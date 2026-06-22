@@ -69,19 +69,6 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Confidence bar (if placement done) */}
-      {data.confidence !== null && (
-        <div className="card">
-          <div className="flex justify-between text-sm mb-2">
-            <span className="text-gray-600 dark:text-gray-400 font-medium">Level Confidence</span>
-            <span className="font-semibold">{data.confidence}%</span>
-          </div>
-          <div className="progress-bar">
-            <div className="progress-bar-fill" style={{ width: `${data.confidence}%` }} />
-          </div>
-        </div>
-      )}
-
       {/* Level progress */}
       {data.levelProgress && (
         <div className="card">

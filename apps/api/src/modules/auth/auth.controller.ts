@@ -37,8 +37,8 @@ export async function register(req: AuthRequest, res: Response): Promise<void> {
       name,
       activeLanguage: 'da',
       progress: {
-        da: { placementCompleted: false, strengths: [], weaknesses: [] },
-        es: { placementCompleted: false, strengths: [], weaknesses: [] },
+        da: { selectedLevel: 'A1', strengths: [], weaknesses: [] },
+        es: { selectedLevel: 'A1', strengths: [], weaknesses: [] },
       },
     });
     const token = generateToken(user._id.toString());
@@ -88,6 +88,25 @@ export async function logout(_req: AuthRequest, res: Response): Promise<void> {
   res.json({ success: true, data: { message: 'Logged out successfully' } });
 }
 
+export async function setLevel(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { level } = req.body;
+    if (!['A1', 'A2', 'B1', 'B2', 'C1'].includes(level)) {
+      res.status(400).json({ success: false, error: 'Invalid level' });
+      return;
+    }
+    const user = await User.findById(req.userId);
+    if (!user) { res.status(404).json({ success: false, error: 'User not found' }); return; }
+    const lang = user.activeLanguage || 'da';
+    await User.findByIdAndUpdate(req.userId, { [`progress.${lang}.selectedLevel`]: level });
+    const updated = await User.findById(req.userId);
+    res.json({ success: true, data: updated?.toJSON() });
+  } catch (error) {
+    console.error('Set level error:', error);
+    res.status(500).json({ success: false, error: 'Failed to set level' });
+  }
+}
+
 export async function switchLanguage(req: AuthRequest, res: Response): Promise<void> {
   try {
     const { language } = req.body;
@@ -103,7 +122,7 @@ export async function switchLanguage(req: AuthRequest, res: Response): Promise<v
     // Initialize progress for this language if not exists
     if (!user.progress?.[language]) {
       user.progress = user.progress || {};
-      user.progress[language] = { placementCompleted: false, strengths: [], weaknesses: [] };
+      user.progress[language] = { selectedLevel: 'A1', strengths: [], weaknesses: [] };
     }
     user.activeLanguage = language as 'da' | 'es';
     await user.save();

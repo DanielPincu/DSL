@@ -10,7 +10,6 @@ import { errorHandler } from './middleware/errorHandler.js';
 
 // Routes
 import authRoutes from './modules/auth/auth.routes.js';
-import placementRoutes from './modules/placement/placement.routes.js';
 import missionRoutes from './modules/missions/mission.routes.js';
 import conversationRoutes from './modules/conversations/conversation.routes.js';
 import attemptRoutes from './modules/attempts/attempt.routes.js';
@@ -65,7 +64,6 @@ app.get('/api/health', (_req, res) => {
 
 // API routes
 app.use('/api/auth', authRoutes);
-app.use('/api/placement', placementRoutes);
 app.use('/api/missions', missionRoutes);
 app.use('/api/conversations', conversationRoutes);
 app.use('/api/attempts', attemptRoutes);

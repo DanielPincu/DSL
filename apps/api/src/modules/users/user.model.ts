@@ -13,12 +13,7 @@ export interface IUser extends Document {
 
 const languageProgressSchema = new Schema<LanguageProgress>(
   {
-    estimatedLevel: { type: String, enum: ['A1', 'A2', 'B1', 'B2', 'C1'] },
     selectedLevel: { type: String, enum: ['A1', 'A2', 'B1', 'B2', 'C1'] },
-    levelSource: { type: String, enum: ['assessment', 'user_override'] },
-    levelConfidence: { type: Number, min: 0, max: 100 },
-    placementCompleted: { type: Boolean, default: false },
-    target: { type: String, enum: ['daily_life', 'work', 'citizenship', 'exam'] },
     strengths: [{ type: String }],
     weaknesses: [{ type: String }],
   },
@@ -44,11 +39,7 @@ const userSchema = new Schema<IUser>(
         // Ensure default progress exists
         for (const lang of ['da', 'es']) {
           if (!(obj.progress as Record<string, unknown>)[lang]) {
-            (obj.progress as Record<string, unknown>)[lang] = {
-              placementCompleted: false,
-              strengths: [],
-              weaknesses: [],
-            };
+            (obj.progress as Record<string, unknown>)[lang] = { selectedLevel: 'A1', strengths: [], weaknesses: [] };
           }
         }
         delete obj.passwordHash;

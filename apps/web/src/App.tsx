@@ -4,7 +4,6 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Placement from './pages/Placement';
 import Dashboard from './pages/Dashboard';
 import Missions from './pages/Missions';
 import MissionDetail from './pages/MissionDetail';
@@ -22,8 +21,7 @@ function HomeRedirect() {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  const prog = user.progress?.[user.activeLanguage];
-    if (!prog?.placementCompleted) return <Navigate to="/placement" replace />;
+  
 
   return <Navigate to="/dashboard" replace />;
 }
@@ -36,15 +34,6 @@ export default function App() {
       <Route path="/register" element={<Register />} />
 
       {/* Placement (needs auth but no layouts) */}
-      <Route
-        path="/placement"
-        element={
-          <ProtectedRoute>
-            <Placement />
-          </ProtectedRoute>
-        }
-      />
-
       {/* Protected routes with layout */}
       <Route
         path="/dashboard"

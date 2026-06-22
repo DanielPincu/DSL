@@ -2,9 +2,9 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { User, Language, LanguageProgress } from '@dls/shared';
 
 export function getCurrentProgress(user: User | null, lang?: Language): LanguageProgress {
-  if (!user) return { placementCompleted: false, strengths: [], weaknesses: [] };
+  if (!user) return { strengths: [], weaknesses: [] };
   const l = lang || user.activeLanguage;
-  return user.progress?.[l] || { placementCompleted: false, strengths: [], weaknesses: [] };
+  return user.progress?.[l] || { strengths: [], weaknesses: [] };
 }
 import { api } from '../api/client';
 

@@ -15,7 +15,6 @@ export async function getDashboard(req: AuthRequest, res: Response): Promise<voi
     if (!user) { res.status(404).json({ success: false, error: 'User not found' }); return; }
 
     const lang = user.activeLanguage || 'da';
-    const prog = getLanguageProgress(user, lang);
     const activeLevel = getActiveLevel(user, lang);
 
     // Language-specific counts
@@ -81,11 +80,9 @@ export async function getDashboard(req: AuthRequest, res: Response): Promise<voi
 
     const dashboard: DashboardData = {
       activeLevel,
-      levelSource: prog.levelSource || null,
-      confidence: prog.levelConfidence ?? null,
-      placementCompleted: prog.placementCompleted,
-      strengths: prog.strengths,
-      weaknesses: prog.weaknesses,
+      levelSource: null,
+      strengths: [],
+      weaknesses: [],
       completedMissions: completedConversations,
       conversationsCount: totalConversations,
       savedMistakes,

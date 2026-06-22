@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
-import { getActiveLevel, type CEFRLevel, CEFR_LEVELS, type LearningTarget, LEARNING_TARGETS } from '@dls/shared';
+import { getActiveLevel, type CEFRLevel, CEFR_LEVELS } from '@dls/shared';
 
 export default function Profile() {
   const { user, refreshUser } = useAuth();
@@ -16,21 +16,11 @@ export default function Profile() {
     setSaving(true);
     setMessage('');
     try {
-      await api.post('/placement/override', { selectedLevel: level });
+      await api.patch('/auth/level', { level });
       await refreshUser();
-      setMessage(`Level updated to ${level}`);
+      setMessage(`Level set to ${level}`);
     } catch {
       setMessage('Failed to update level');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleSetTarget(target: LearningTarget) {
-    setSaving(true);
-    try {
-      // Profile update endpoint could be added — for now skip
-      setMessage(`Target set to ${target}`);
     } finally {
       setSaving(false);
     }
@@ -59,39 +49,23 @@ export default function Profile() {
 
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
-            <p className="text-gray-500 dark:text-gray-400">Estimated Level</p>
-            <p className="font-bold text-lg text-gray-900 dark:text-white">
-              {user.progress[user.activeLanguage]?.estimatedLevel || 'Not assessed'}
-            </p>
-          </div>
-          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
             <p className="text-gray-500 dark:text-gray-400">Active Level</p>
-            <p className="font-bold text-lg text-gray-900 dark:text-white">
-              {activeLevel || 'N/A'}
-            </p>
+            <p className="font-bold text-lg text-gray-900 dark:text-white">{activeLevel}</p>
           </div>
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
-            <p className="text-gray-500 dark:text-gray-400">Level Source</p>
-            <p className="font-semibold text-gray-900 dark:text-white capitalize">
-              {user.progress[user.activeLanguage]?.levelSource?.replace('_', ' ') || 'N/A'}
-            </p>
-          </div>
-          <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
-            <p className="text-gray-500 dark:text-gray-400">Placement</p>
-            <p className="font-semibold text-gray-900 dark:text-white">
-              {user.progress[user.activeLanguage]?.placementCompleted ? '✅ Completed' : '❌ Not done'}
-            </p>
+            <p className="text-gray-500 dark:text-gray-400">Language</p>
+            <p className="font-semibold text-gray-900 dark:text-white capitalize">{user.activeLanguage === 'es' ? 'Español' : 'Dansk'}</p>
           </div>
         </div>
       </div>
 
-      {/* Override Level */}
+      {/* Set Level */}
       <div className="card">
-        <h2 className="font-semibold text-gray-900 dark:text-white mb-3">Override Level</h2>
+        <h2 className="font-semibold text-gray-900 dark:text-white mb-3">Choose Your Level</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-          Choose your own level if you think the assessment wasn't accurate
+          You start at A1. You can freely set a different level — this determines which missions you see.
         </p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {CEFR_LEVELS.map((level) => (
             <button
               key={level}
@@ -107,34 +81,10 @@ export default function Profile() {
             </button>
           ))}
         </div>
+        <p className="text-xs text-gray-400 mt-3">
+          Missions are completed in order within each level. Finish all missions at your current level to auto-advance to the next.
+        </p>
       </div>
-
-      {/* Strengths & Weaknesses */}
-      {user.progress[user.activeLanguage]?.strengths.length > 0 && (
-        <div className="card">
-          <h2 className="font-semibold text-gray-900 dark:text-white mb-3">💪 Strengths</h2>
-          <div className="flex flex-wrap gap-2">
-            {user.progress[user.activeLanguage]?.strengths.map((s, i) => (
-              <span key={i} className="badge bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-                {s}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {user.progress[user.activeLanguage]?.weaknesses.length > 0 && (
-        <div className="card">
-          <h2 className="font-semibold text-gray-900 dark:text-white mb-3">📚 Areas to Improve</h2>
-          <div className="flex flex-wrap gap-2">
-            {user.progress[user.activeLanguage]?.weaknesses.map((w, i) => (
-              <span key={i} className="badge bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300">
-                {w}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       {message && (
         <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-3 rounded-xl text-sm">

@@ -38,12 +38,7 @@ export const LANGUAGE_FLAGS: Record<Language, string> = {
 
 // User — per-language progress
 export interface LanguageProgress {
-  estimatedLevel?: CEFRLevel;
   selectedLevel?: CEFRLevel;
-  levelSource?: LevelSource;
-  levelConfidence?: number;
-  placementCompleted: boolean;
-  target?: LearningTarget;
   strengths: string[];
   weaknesses: string[];
 }
@@ -58,34 +53,15 @@ export interface User {
   updatedAt: string;
 }
 
-export function getActiveLevel(user: Pick<User, 'progress'> | null, language: Language): CEFRLevel | null {
-  if (!user) return null;
-  const p = user.progress?.[language];
-  if (!p) return null;
-  return p.selectedLevel ?? p.estimatedLevel ?? null;
+export function getActiveLevel(user: Pick<User, 'progress'> | null, language: Language): CEFRLevel {
+  if (!user?.progress?.[language]?.selectedLevel) return 'A1';
+  return user.progress[language].selectedLevel!;
 }
 
 export function getLanguageProgress(user: Pick<User, 'progress'> | null, language: Language): LanguageProgress {
-  const defaultProgress: LanguageProgress = {
-    placementCompleted: false,
-    strengths: [],
-    weaknesses: [],
-  };
+  const defaultProgress: LanguageProgress = { strengths: [], weaknesses: [] };
   if (!user?.progress?.[language]) return defaultProgress;
   return { ...defaultProgress, ...user.progress[language] };
-}
-
-// Placement
-export interface PlacementResult {
-  estimatedLevel: CEFRLevel;
-  confidence: number;
-  strengths: string[];
-  weaknesses: string[];
-  explanation: string;
-}
-
-export interface PlacementOverride {
-  selectedLevel: CEFRLevel;
 }
 
 // Mission
@@ -190,10 +166,8 @@ export interface ApiResponse<T = unknown> {
 
 // Dashboard
 export interface DashboardData {
-  activeLevel: CEFRLevel | null;
+  activeLevel: CEFRLevel;
   levelSource: LevelSource | null;
-  confidence: number | null;
-  placementCompleted: boolean;
   strengths: string[];
   weaknesses: string[];
   completedMissions: number;
