@@ -49,6 +49,7 @@ export default function MissionConversation() {
   const [notPassedReason, setNotPassedReason] = useState<string | null>(null);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
   const [promoted, setPromoted] = useState<string | null>(null);
+  const wasReset = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -59,7 +60,9 @@ export default function MissionConversation() {
         const displayMessages = data.messages.filter((m) => m.role !== 'system');
         setMessages(displayMessages);
       })
-      .catch(() => navigate('/missions'))
+      .catch(() => {
+        if (!wasReset.current) navigate('/missions');
+      })
       .finally(() => setLoading(false));
   }, [conversationId, navigate]);
 
