@@ -227,17 +227,20 @@ export default function MissionConversation() {
           </div>
         )}
 
-        {/* Reset message — shown briefly before redirect */}
+        {/* Reset message — stays until user clicks */}
         {resetMessage && (
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-5 text-center animate-pulse-slow">
-            <span className="text-4xl block mb-2">💪</span>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-1">Not quite there yet</h3>
-            <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700 rounded-2xl p-6 text-center">
+            <span className="text-5xl block mb-3">💪</span>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Not quite there yet</h3>
+            <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-4 leading-relaxed">
               {resetMessage}
             </p>
-            <p className="text-xs text-yellow-500 dark:text-yellow-400">
-              Starting fresh — try again!
-            </p>
+            <button
+              onClick={() => navigate(`/missions/${slug}`)}
+              className="btn bg-danish-red text-white hover:bg-red-700 shadow-lg"
+            >
+              Try Again
+            </button>
           </div>
         )}
 
@@ -310,7 +313,7 @@ export default function MissionConversation() {
       )}
 
       {/* Input */}
-      {!complete && (
+      {!complete && !resetMessage && (
         <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-danish-card px-4 py-4">
           <form onSubmit={handleSubmit} className="flex gap-3">
             <input
