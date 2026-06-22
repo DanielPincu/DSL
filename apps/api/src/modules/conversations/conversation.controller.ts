@@ -129,8 +129,8 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
     }
 
     let autoPromoted: CEFRLevel | null = null;
-    const isGoodbye = userMessage.toLowerCase().includes('farvel') || userMessage.toLowerCase().includes('adiós') ||
-      aiFeedback.npcReply.toLowerCase().includes('farvel') || aiFeedback.npcReply.toLowerCase().includes('adiós');
+    const isGoodbye = userMessage.toLowerCase().includes('farvel') || userMessage.toLowerCase().includes('adiós') || userMessage.toLowerCase().includes('adios') ||
+      aiFeedback.npcReply.toLowerCase().includes('farvel') || aiFeedback.npcReply.toLowerCase().includes('adiós') || aiFeedback.npcReply.toLowerCase().includes('adios');
 
     const allUserMsgs = conversation.messages.filter((m) => m.role === 'user').map((m) => m.content.toLowerCase().trim());
     const meaningfulCount = allUserMsgs.filter((m) => {
