@@ -190,6 +190,8 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
         feedback: 'Keep going!',
         score: 70,
         detectedMistakes: [],
+        passed: true,
+        passedReason: '',
       };
     }
 
@@ -260,12 +262,25 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
     // Anti-cheat: require at least 3 user messages before "farvel" counts
     const userMsgCount = conversation.messages.filter((m) => m.role === 'user').length;
     if (isGoodbye && userMsgCount >= 3) {
-      conversation.status = 'completed';
-      conversation.finalScore = aiFeedback.score || 70;
-      await conversation.save();
+      // AI quality gate: only complete if the user demonstrated sufficient Danish
+      if (aiFeedback.passed) {
+        conversation.status = 'completed';
+        conversation.finalScore = aiFeedback.score || 70;
+        await conversation.save();
 
-      // Check if all missions at this level are done → promote
-      autoPromoted = await checkAutoPromotion(userId);
+        // Check if all missions at this level are done → promote
+        autoPromoted = await checkAutoPromotion(userId);
+      } else {
+        // Not passed — keep conversation active, tell user what to improve
+        const reason = aiFeedback.passedReason || 'prøv igen og øv dig mere';
+        conversation.messages.push({
+          role: 'assistant',
+          content: `Du er ikke helt klar endnu. ${reason}. Prøv igen! (You're not quite ready yet. ${reason}. Try again!)`,
+          createdAt: new Date().toISOString(),
+        });
+        await conversation.save();
+        aiFeedback.npcReply = `Du er ikke helt klar endnu. ${reason}. Prøv igen! (You're not quite ready yet. ${reason}. Try again!)`;
+      }
     } else if (isGoodbye && userMsgCount < 3) {
       // Tell the user they need to actually practice first
       conversation.messages.push({
@@ -286,8 +301,10 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
         corrections: aiFeedback.corrections || [],
         feedback: aiFeedback.feedback || '',
         score: aiFeedback.score || 70,
-        conversationComplete: isGoodbye && userMsgCount >= 3,
+        conversationComplete: isGoodbye && userMsgCount >= 3 && aiFeedback.passed,
         autoPromoted,
+        passed: aiFeedback.passed,
+        passedReason: aiFeedback.passedReason,
       },
     });
   } catch (error) {

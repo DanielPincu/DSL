@@ -137,6 +137,8 @@ export interface AIFeedback {
   feedback: string;
   score: number;
   detectedMistakes: Correction[];
+  passed: boolean;
+  passedReason?: string;
 }
 
 // Mistake

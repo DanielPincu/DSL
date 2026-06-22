@@ -203,7 +203,9 @@ Then provide your analysis as valid JSON with this exact structure:
     }
   ],
   "feedback": "Brief encouraging feedback in English",
-  "score": 0-100
+  "score": 0-100,
+  "passed": true,
+  "passedReason": ""
 }
 
 Important RULES:
@@ -212,6 +214,10 @@ Important RULES:
 - corrections MUST be a non-empty array when the user makes errors
 - corrections should be [] (empty array) ONLY if the user wrote perfect Danish
 - score 0-100: reflect overall quality of the user's Danish
-- If the user says "farvel" or goodbye, indicate conversation should end
+- If the user says "farvel" or goodbye, set passed to true ONLY if the user demonstrated sufficient Danish for their level (${level}) in this scenario.
+  Evaluate: did they use appropriate vocabulary? Did they form understandable sentences?
+  Did they complete the scenario goal? Was it a meaningful conversation?
+  If passed is false, explain why in passedReason in English.
+  If passed is true, leave passedReason empty.
 - Respond in valid JSON format only, no markdown`;
 }

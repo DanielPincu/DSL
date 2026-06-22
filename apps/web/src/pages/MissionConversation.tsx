@@ -18,6 +18,8 @@ interface SendMessageResponse {
   score: number;
   conversationComplete: boolean;
   autoPromoted?: string | null;
+  passed?: boolean;
+  passedReason?: string;
 }
 
 export default function MissionConversation() {
@@ -32,6 +34,7 @@ export default function MissionConversation() {
   const [lastFeedback, setLastFeedback] = useState('');
   const [lastScore, setLastScore] = useState(0);
   const [complete, setComplete] = useState(false);
+  const [notPassedReason, setNotPassedReason] = useState<string | null>(null);
   const [promoted, setPromoted] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -40,7 +43,6 @@ export default function MissionConversation() {
     api.get<ConversationData>(`/conversations/${conversationId}`)
       .then((data) => {
         setConversation(data);
-        // Filter out system messages for display
         const displayMessages = data.messages.filter((m) => m.role !== 'system');
         setMessages(displayMessages);
       })
@@ -61,6 +63,7 @@ export default function MissionConversation() {
     setMessages((prev) => [...prev, { role: 'user', content: userMsg }]);
     setSending(true);
     setShowCorrections([]);
+    setNotPassedReason(null);
 
     try {
       const data = await api.post<SendMessageResponse>(
@@ -79,6 +82,8 @@ export default function MissionConversation() {
 
       if (data.conversationComplete) {
         setComplete(true);
+      } else if (data.passed === false) {
+        setNotPassedReason(data.passedReason || null);
       }
     } catch {
       setMessages((prev) => [
@@ -189,6 +194,22 @@ export default function MissionConversation() {
               </div>
               <span className="text-sm font-bold text-danish-red">{lastScore}%</span>
             </div>
+          </div>
+        )}
+
+        {/* Not passed notice — keep practicing */}
+        {notPassedReason && (
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-4 text-center">
+            <span className="text-3xl block mb-2">💪</span>
+            <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+              Not quite there yet
+            </p>
+            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+              {notPassedReason}
+            </p>
+            <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+              Keep practicing and try "farvel" again when you're ready!
+            </p>
           </div>
         )}
 
