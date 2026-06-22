@@ -222,6 +222,9 @@ Important RULES:
 - If the user says "farvel" or goodbye, set passed to true ONLY if the user demonstrated sufficient Danish for their level (${level}) in this scenario.
   Evaluate: did they use appropriate vocabulary? Did they form understandable sentences?
   Did they complete the scenario goal? Was it a meaningful conversation?
+  CONTEXT CHECK: Did the user actually talk about the scenario topic?
+  If the conversation is about buying butter and they talked about cars instead, they MUST fail (passed=false).
+  passedReason should explain: "You didn't stay on topic. The mission was about [scenario], but you talked about [off-topic subject]."
   If passed is false, explain why in passedReason in English.
   If passed is true, leave passedReason empty.
 - Respond in valid JSON format only, no markdown`;

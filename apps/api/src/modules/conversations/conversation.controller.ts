@@ -237,14 +237,17 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
     // Check if conversation should end
     const isGoodbye =
       userMessage.toLowerCase().includes('farvel') ||
-      userMessage.toLowerCase().includes('goodbye') ||
-      userMessage.toLowerCase().includes('hej hej') ||
-      aiFeedback.npcReply.toLowerCase().includes('farvel') ||
-      aiFeedback.npcReply.toLowerCase().includes('goodbye');
+      aiFeedback.npcReply.toLowerCase().includes('farvel');
 
-    const userMsgCount = conversation.messages.filter((m) => m.role === 'user').length;
+    // Count meaningful messages (exclude short greetings)
+    const allUserMsgs = conversation.messages.filter((m) => m.role === 'user').map((m) => m.content.toLowerCase().trim());
+    const meaningfulCount = allUserMsgs.filter((m) => {
+      const wordCount = m.split(/\s+/).length;
+      const isShort = m === 'hej' || m === 'hej!' || m === 'ja' || m === 'nej' || m === 'ok' || wordCount <= 1;
+      return !isShort;
+    }).length;
 
-    if (isGoodbye && userMsgCount >= 3) {
+    if (isGoodbye && meaningfulCount >= 5) {
       if (aiFeedback.passed) {
         conversation.status = 'completed';
         conversation.finalScore = aiFeedback.score || 70;
@@ -277,14 +280,14 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
         });
         return;
       }
-    } else if (isGoodbye && userMsgCount < 3) {
+    } else if (isGoodbye && meaningfulCount < 5) {
       // Anti-cheat: not enough practice — full reset
       await Mistake.deleteMany({ conversationId: conversation._id });
       await Attempt.deleteMany({ conversationId: conversation._id });
       await Conversation.findByIdAndDelete(conversation._id);
       res.json({
         success: true,
-        data: { reset: true, reason: 'Du skrev for få beskeder. Skriv mindst 3 beskeder på dansk før du siger farvel.' },
+        data: { reset: true, reason: 'Du skrev for få beskeder. Skriv mindst 5 beskeder på dansk før du siger farvel.' },
       });
       return;
     }

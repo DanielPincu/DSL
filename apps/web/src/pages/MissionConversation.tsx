@@ -24,6 +24,16 @@ interface SendMessageResponse {
   reason?: string;
 }
 
+function countMeaningful(messages: { role: string; content: string }[]): number {
+  return messages.filter((m) => {
+    if (m.role !== 'user') return false;
+    const text = m.content.toLowerCase().trim();
+    const words = text.split(/[\s]+/).length;
+    const isShort = text === 'hej' || text === 'hej!' || text === 'ja' || text === 'nej' || text === 'ok' || words <= 1;
+    return !isShort;
+  }).length;
+}
+
 export default function MissionConversation() {
   const { slug, conversationId } = useParams<{ slug: string; conversationId: string }>();
   const navigate = useNavigate();
@@ -143,9 +153,17 @@ export default function MissionConversation() {
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {/* End conversation hint */}
         {!complete && messages.length > 0 && (
-          <div className="text-center">
+          <div className="text-center space-y-2">
+            {(() => {
+              const msgCount = countMeaningful(messages);
+              return (
+                <span className={"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs " + (msgCount >= 5 ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400")}>
+                  📝 {Math.min(msgCount, 5)}/5 messages
+                </span>
+              );
+            })()}
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400">
-              💡 Say <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-gray-700 font-mono text-[11px] border border-gray-300 dark:border-gray-600">farvel</kbd> or <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-gray-700 font-mono text-[11px] border border-gray-300 dark:border-gray-600">hej hej</kbd> to end
+              💡 Say <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-gray-700 font-mono text-[11px] border border-gray-300 dark:border-gray-600">farvel</kbd> when you're done
             </span>
           </div>
         )}
