@@ -81,6 +81,31 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Level progress */}
+      {data.levelProgress && (
+        <div className="card">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {data.levelProgress.level} Progress
+            </span>
+            <span className="text-sm font-bold text-gray-900 dark:text-white">
+              {data.levelProgress.completed}/{data.levelProgress.total} missions
+            </span>
+          </div>
+          <div className="progress-bar">
+            <div
+              className="progress-bar-fill"
+              style={{ width: `${data.levelProgress.total > 0 ? (data.levelProgress.completed / data.levelProgress.total) * 100 : 0}%` }}
+            />
+          </div>
+          {data.levelProgress.allDone && (
+            <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+              🎉 All {data.levelProgress.level} missions complete! Start any mission and say "farvel" to advance.
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Strengths & Weaknesses */}
         <div className="space-y-4">

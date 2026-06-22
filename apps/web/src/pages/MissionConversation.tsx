@@ -17,6 +17,7 @@ interface SendMessageResponse {
   feedback: string;
   score: number;
   conversationComplete: boolean;
+  autoPromoted?: string | null;
 }
 
 export default function MissionConversation() {
@@ -31,6 +32,7 @@ export default function MissionConversation() {
   const [lastFeedback, setLastFeedback] = useState('');
   const [lastScore, setLastScore] = useState(0);
   const [complete, setComplete] = useState(false);
+  const [promoted, setPromoted] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,6 +72,10 @@ export default function MissionConversation() {
       setShowCorrections(data.corrections);
       setLastFeedback(data.feedback);
       setLastScore(data.score);
+
+      if (data.autoPromoted) {
+        setPromoted(data.autoPromoted);
+      }
 
       if (data.conversationComplete) {
         setComplete(true);
@@ -183,6 +189,19 @@ export default function MissionConversation() {
               </div>
               <span className="text-sm font-bold text-danish-red">{lastScore}%</span>
             </div>
+          </div>
+        )}
+
+        {/* Level promotion banner */}
+        {promoted && (
+          <div className="bg-gradient-to-r from-danish-accent/20 to-green-100 dark:from-danish-accent/10 dark:to-green-900/20 border border-danish-accent/30 dark:border-green-800 rounded-2xl p-5 text-center">
+            <span className="text-4xl block mb-2">🎉</span>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+              Level Up! {promoted}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              You completed all missions and advanced to the next level!
+            </p>
           </div>
         )}
 

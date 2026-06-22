@@ -6,7 +6,7 @@ import Conversation from '../conversations/conversation.model.js';
 import Mistake from '../mistakes/mistake.model.js';
 import Attempt from '../attempts/attempt.model.js';
 import { getActiveLevel } from '@dls/shared';
-import type { DashboardData, Mission as MissionType } from '@dls/shared';
+import type { DashboardData, Mission as MissionType, MissionLevelProgress } from '@dls/shared';
 
 export async function getDashboard(req: AuthRequest, res: Response): Promise<void> {
   try {
@@ -20,7 +20,7 @@ export async function getDashboard(req: AuthRequest, res: Response): Promise<voi
 
     const activeLevel = getActiveLevel(user);
 
-    // Completed missions count
+    // Completed missions count (overall)
     const completedConversations = await Conversation.countDocuments({
       userId,
       status: 'completed',
@@ -39,45 +39,54 @@ export async function getDashboard(req: AuthRequest, res: Response): Promise<voi
       count: m.count,
     }));
 
-    // Suggested mission - find missions at user's level they haven't completed
+    // Level progress & suggested mission
     let suggestedMission: MissionType | null = null;
     let suggestedMissionConversationId: string | undefined = undefined;
+    let levelProgress: MissionLevelProgress | null = null;
+
     if (activeLevel) {
-      const completedMissionIds = (
+      const levelMissions = await Mission.find({ level: activeLevel }).sort({ order: 1 });
+      const completedIds = (
         await Conversation.distinct('missionId', { userId, status: 'completed' })
       ).map((id) => id.toString());
 
-      // Also exclude missions with active conversations — those show as "Continue"
-      const activeMissionIds = (
-        await Conversation.distinct('missionId', { userId, status: 'active' })
-      ).map((id) => id.toString());
+      const completedInLevel = levelMissions.filter((m) =>
+        completedIds.includes(m._id.toString())
+      ).length;
 
-      const missionDoc = await Mission.findOne({
+      levelProgress = {
         level: activeLevel,
-        _id: { $nin: [...completedMissionIds, ...activeMissionIds] },
-      }).sort({ createdAt: 1 });
+        total: levelMissions.length,
+        completed: completedInLevel,
+        allDone: levelMissions.length > 0 && completedInLevel >= levelMissions.length,
+      };
 
-      if (missionDoc) {
-        suggestedMission = missionDoc.toJSON() as unknown as MissionType;
-      }
+      // Find next uncompleted mission (prefer active conversations)
+      const activeConv = await Conversation.findOne({
+        userId,
+        missionId: { $in: levelMissions.map((m) => m._id) },
+        status: 'active',
+      }).populate('missionId').sort({ updatedAt: -1 });
 
-      // If there's an active conversation for a mission at this level, link to that instead
-      if (activeMissionIds.length > 0) {
-        const activeConv = await Conversation.findOne({
-          userId,
-          missionId: { $in: activeMissionIds },
-          status: 'active',
-        }).populate('missionId').sort({ updatedAt: -1 });
-
-        if (activeConv && activeConv.missionId) {
-          const popMission = activeConv.missionId as unknown as { toJSON: () => MissionType };
-          suggestedMission = popMission.toJSON() as MissionType;
-          suggestedMissionConversationId = activeConv._id.toString();
+      if (activeConv && activeConv.missionId) {
+        const popMission = activeConv.missionId as unknown as { toJSON: () => MissionType };
+        suggestedMission = popMission.toJSON() as MissionType;
+        suggestedMissionConversationId = activeConv._id.toString();
+      } else {
+        // Find first uncompleted mission by order
+        const nextMission = levelMissions.find(
+          (m) => !completedIds.includes(m._id.toString())
+        );
+        if (nextMission) {
+          suggestedMission = nextMission.toJSON() as unknown as MissionType;
+        } else if (levelProgress.allDone) {
+          // All done — suggest the last mission so they can still review
+          suggestedMission = levelMissions[levelMissions.length - 1]?.toJSON() as unknown as MissionType;
         }
       }
     }
 
-    // Streak calculation (simplified: consecutive days with conversations)
+    // Streak calculation
     const recentConversations = await Conversation.find({ userId })
       .sort({ createdAt: -1 })
       .limit(30);
@@ -124,6 +133,7 @@ export async function getDashboard(req: AuthRequest, res: Response): Promise<voi
       weakestCategories,
       suggestedMission,
       suggestedMissionConversationId,
+      levelProgress,
       currentStreak,
       recentActivity,
     };

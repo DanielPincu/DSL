@@ -2,63 +2,54 @@ import { Request, Response } from 'express';
 import Mission from './mission.model.js';
 import Conversation from '../conversations/conversation.model.js';
 import type { AuthRequest } from '../../middleware/auth.js';
-import type { MissionWithProgress, CEFRLevel } from '@dls/shared';
+import type { MissionLevelProgress, CEFRLevel } from '@dls/shared';
+import User from '../users/user.model.js';
+import { getActiveLevel } from '@dls/shared';
 
-const LEVEL_ORDER: Record<CEFRLevel, number> = { A1: 0, A2: 1, B1: 2, B2: 3 };
+const CEFR_ORDER: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2'];
 
 /**
- * Determine which missions are unlocked for a user.
- * Missions are ordered by level (A1 → A2 → B1 → B2) then by creation date.
- * A mission is unlocked when all missions before it are completed.
+ * Get the level the user should be working on.
+ * Returns missions ONLY at the user's active level, sorted by difficulty (order).
  */
-async function getMissionProgress(userId: string): Promise<(MissionWithProgress)[]> {
-  const missions = await Mission.find().sort({ level: 1, createdAt: 1 });
-
-  // Get completed mission IDs for this user
-  const completedIds = (
-    await Conversation.distinct('missionId', { userId, status: 'completed' })
-  ).map((id) => id.toString());
-
-  // Sort missions by level order then creation date
-  const sorted = missions.sort((a, b) => {
-    const levelDiff = LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level];
-    if (levelDiff !== 0) return levelDiff;
-    return a.createdAt.getTime() - b.createdAt.getTime();
-  });
-
-  // Find how many consecutive missions from the start are completed
-  let completedCount = 0;
-  for (const m of sorted) {
-    if (completedIds.includes(m._id.toString())) {
-      completedCount++;
-    } else {
-      break;
-    }
-  }
-
-  return sorted.map((m, i) => {
-    const json = m.toJSON() as unknown as MissionWithProgress;
-    const isCompleted = completedIds.includes(m._id.toString());
-
-    if (isCompleted) {
-      json.locked = false;
-    } else if (i <= completedCount) {
-      // First N consecutive completed, next one is unlocked
-      json.locked = false;
-    } else {
-      json.locked = true;
-      json.lockedReason = `Complete "${sorted[i - 1].title}" first`;
-    }
-
-    return json;
-  });
-}
-
 export async function getAllMissions(req: AuthRequest, res: Response): Promise<void> {
   try {
     const userId = req.userId!;
-    const missions = await getMissionProgress(userId);
-    res.json({ success: true, data: missions });
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    const activeLevel = getActiveLevel(user) || 'A1';
+
+    // Get all missions at the user's level, sorted by order (progressive difficulty)
+    const missions = await Mission.find({ level: activeLevel }).sort({ order: 1 });
+
+    // Calculate progress for the current level
+    const totalMissions = missions.length;
+    const completedIds = (
+      await Conversation.distinct('missionId', { userId, status: 'completed' })
+    ).map((id) => id.toString());
+
+    const completedInLevel = missions.filter((m) =>
+      completedIds.includes(m._id.toString())
+    ).length;
+
+    const levelProgress: MissionLevelProgress = {
+      level: activeLevel,
+      total: totalMissions,
+      completed: completedInLevel,
+      allDone: totalMissions > 0 && completedInLevel >= totalMissions,
+    };
+
+    res.json({
+      success: true,
+      data: {
+        missions,
+        progress: levelProgress,
+      },
+    });
   } catch (error) {
     console.error('Get missions error:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch missions' });
@@ -74,16 +65,24 @@ export async function getMissionBySlug(req: AuthRequest, res: Response): Promise
       return;
     }
 
-    // Check if mission is unlocked
-    const progression = await getMissionProgress(userId);
-    const prog = progression.find((m) => m.slug === req.params.slug);
-    const isLocked = prog?.locked ?? false;
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
 
-    const data = mission.toJSON();
-    res.json({
-      success: true,
-      data: { ...data, locked: isLocked, lockedReason: prog?.lockedReason },
-    });
+    const activeLevel = getActiveLevel(user) || 'A1';
+
+    // Only allow viewing missions at the user's level
+    if (mission.level !== activeLevel) {
+      res.status(403).json({
+        success: false,
+        error: `This mission is level ${mission.level}. Your current level is ${activeLevel}. Complete all missions at your level first.`,
+      });
+      return;
+    }
+
+    res.json({ success: true, data: mission.toJSON() });
   } catch (error) {
     console.error('Get mission error:', error);
     res.status(500).json({ success: false, error: 'Failed to fetch mission' });

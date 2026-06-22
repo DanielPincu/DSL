@@ -6,6 +6,7 @@ export interface IMission extends Document {
   slug: string;
   category: MissionCategory;
   level: CEFRLevel;
+  order: number;
   description: string;
   scenarioPrompt: string;
   npcName: string;
@@ -36,6 +37,7 @@ const missionSchema = new Schema<IMission>(
     scenarioPrompt: { type: String, required: true },
     npcName: { type: String, required: true },
     npcRole: { type: String, required: true },
+    order: { type: Number, required: true, default: 0 },
     requiredPhrases: [{ type: String }],
   },
   {

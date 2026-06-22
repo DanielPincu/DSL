@@ -6,42 +6,55 @@ import Attempt from '../attempts/attempt.model.js';
 import Mistake from '../mistakes/mistake.model.js';
 import User from '../users/user.model.js';
 import { getActiveLevel } from '@dls/shared';
-import type { CEFRLevel } from '@dls/shared';
 import { getAIProvider, buildConversationAIPrompt } from '../ai/ai.service.js';
-import type { AIFeedback } from '@dls/shared';
+import type { AIFeedback, CEFRLevel } from '@dls/shared';
 import mongoose from 'mongoose';
 
-const LEVEL_ORDER: Record<CEFRLevel, number> = { A1: 0, A2: 1, B1: 2, B2: 3 };
+const NEXT_LEVEL: Record<string, CEFRLevel> = {
+  A1: 'A2',
+  A2: 'B1',
+  B1: 'B2',
+};
 
-/** Check if a mission is unlocked for the user (linear progression) */
-async function isMissionUnlocked(userId: string, missionId: string): Promise<{ unlocked: boolean; reason?: string }> {
-  const allMissions = await Mission.find().sort({ level: 1, createdAt: 1 });
-  const completedIds = (
-    await Conversation.distinct('missionId', { userId, status: 'completed' })
-  ).map((id) => id.toString());
+/**
+ * Check if the user has completed all missions at their current level.
+ * If so, auto-promote them to the next level.
+ */
+async function checkAutoPromotion(userId: string): Promise<CEFRLevel | null> {
+  const user = await User.findById(userId);
+  if (!user) return null;
 
-  const sorted = allMissions.sort((a, b) => {
-    const ld = LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level];
-    return ld !== 0 ? ld : a.createdAt.getTime() - b.createdAt.getTime();
+  // Don't auto-promote if user manually overrode their level
+  if (user.levelSource === 'user_override') return null;
+
+  const currentLevel = getActiveLevel(user);
+  if (!currentLevel) return null;
+
+  const nextLevel = NEXT_LEVEL[currentLevel];
+  if (!nextLevel) return null; // Already at max level
+
+  // Count missions at current level
+  const levelMissions = await Mission.countDocuments({ level: currentLevel });
+  if (levelMissions === 0) return null;
+
+  // Count completed missions at current level
+  const missionIds = (await Mission.find({ level: currentLevel }).select('_id')).map((m) => m._id);
+  const completed = await Conversation.countDocuments({
+    userId,
+    missionId: { $in: missionIds },
+    status: 'completed',
   });
 
-  const targetIdx = sorted.findIndex((m) => m._id.toString() === missionId);
-  if (targetIdx === -1) return { unlocked: false, reason: 'Mission not found' };
-
-  // First mission is always unlocked
-  if (targetIdx === 0) return { unlocked: true };
-
-  // Check that all previous missions are completed
-  for (let i = 0; i < targetIdx; i++) {
-    if (!completedIds.includes(sorted[i]._id.toString())) {
-      return {
-        unlocked: false,
-        reason: `Complete "${sorted[i].title}" first`,
-      };
-    }
+  if (completed >= levelMissions) {
+    // All missions completed — promote!
+    await User.findByIdAndUpdate(userId, {
+      estimatedLevel: nextLevel,
+      levelConfidence: Math.min((user.levelConfidence || 50) + 5, 100),
+    });
+    return nextLevel;
   }
 
-  return { unlocked: true };
+  return null;
 }
 
 export async function startConversation(req: AuthRequest, res: Response): Promise<void> {
@@ -55,13 +68,6 @@ export async function startConversation(req: AuthRequest, res: Response): Promis
       return;
     }
 
-    // Check linear progression
-    const { unlocked, reason } = await isMissionUnlocked(userId, missionId);
-    if (!unlocked) {
-      res.status(403).json({ success: false, error: reason || 'Complete previous missions first' });
-      return;
-    }
-
     const user = await User.findById(userId);
     if (!user) {
       res.status(404).json({ success: false, error: 'User not found' });
@@ -69,6 +75,15 @@ export async function startConversation(req: AuthRequest, res: Response): Promis
     }
 
     const activeLevel = getActiveLevel(user) || 'A1';
+
+    // Verify the mission is at the user's current level
+    if (mission.level !== activeLevel) {
+      res.status(403).json({
+        success: false,
+        error: `This mission is level ${mission.level}. Your current level is ${activeLevel}. Complete all ${activeLevel} missions first.`,
+      });
+      return;
+    }
 
     // Check for existing active conversation
     const existing = await Conversation.findOne({ userId, missionId, status: 'active' });
@@ -188,7 +203,6 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
     });
 
     // Save mistakes
-    // Check length > 0 because [] is truthy in JS!
     const mistakesSource =
       aiFeedback.detectedMistakes && aiFeedback.detectedMistakes.length > 0
         ? aiFeedback.detectedMistakes
@@ -220,6 +234,8 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
       }
     }
 
+    let autoPromoted: CEFRLevel | null = null;
+
     // Check if conversation should end
     const isGoodbye =
       userMessage.toLowerCase().includes('farvel') ||
@@ -234,6 +250,9 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
       conversation.status = 'completed';
       conversation.finalScore = aiFeedback.score || 70;
       await conversation.save();
+
+      // Check if all missions at this level are done → promote
+      autoPromoted = await checkAutoPromotion(userId);
     } else if (isGoodbye && userMsgCount < 3) {
       // Tell the user they need to actually practice first
       conversation.messages.push({
@@ -254,7 +273,8 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
         corrections: aiFeedback.corrections || [],
         feedback: aiFeedback.feedback || '',
         score: aiFeedback.score || 70,
-        conversationComplete: isGoodbye,
+        conversationComplete: isGoodbye && userMsgCount >= 3,
+        autoPromoted,
       },
     });
   } catch (error) {

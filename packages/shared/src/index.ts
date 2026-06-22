@@ -74,6 +74,7 @@ export interface Mission {
   slug: string;
   category: MissionCategory;
   level: CEFRLevel;
+  order: number;
   description: string;
   scenarioPrompt: string;
   npcName: string;
@@ -83,9 +84,11 @@ export interface Mission {
   updatedAt: string;
 }
 
-export interface MissionWithProgress extends Mission {
-  locked: boolean;
-  lockedReason?: string;
+export interface MissionLevelProgress {
+  level: CEFRLevel;
+  total: number;
+  completed: number;
+  allDone: boolean;
 }
 
 // Conversation
@@ -172,6 +175,7 @@ export interface DashboardData {
   weakestCategories: { category: string; count: number }[];
   suggestedMission: Mission | null;
   suggestedMissionConversationId?: string;
+  levelProgress: MissionLevelProgress | null;
   currentStreak: number;
   recentActivity: {
     type: 'conversation' | 'mistake' | 'mission_complete';
