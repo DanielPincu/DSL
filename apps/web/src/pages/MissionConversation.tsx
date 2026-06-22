@@ -49,7 +49,6 @@ export default function MissionConversation() {
   const [notPassedReason, setNotPassedReason] = useState<string | null>(null);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
   const [promoted, setPromoted] = useState<string | null>(null);
-  const wasReset = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -61,10 +60,11 @@ export default function MissionConversation() {
         setMessages(displayMessages);
       })
       .catch(() => {
-        if (!wasReset.current) navigate('/missions');
+        // Conversation not found (e.g. was reset) — show empty state instead of redirecting
+        setLoading(false);
       })
       .finally(() => setLoading(false));
-  }, [conversationId, navigate]);
+  }, [conversationId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -121,11 +121,25 @@ export default function MissionConversation() {
   }
 
   if (loading) return <LoadingSpinner text="Loading conversation..." />;
-  if (!conversation) return null;
+  if (!conversation && !resetMessage) {
+    return (
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center -mx-4 sm:-mx-6">
+        <div className="text-center">
+          <span className="text-5xl block mb-4">🔍</span>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Conversation not found</p>
+          <button onClick={() => navigate('/missions')} className="btn-primary">
+            Back to Missions
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  const missionTitle = typeof conversation.missionId === 'object'
-    ? conversation.missionId.title
-    : 'Mission';
+  // Fallback values when conversation is null (e.g. after reset)
+  const convMission = conversation?.missionId;
+  const missionTitle = convMission && typeof convMission === 'object' ? (convMission as { title: string }).title : 'Conversation';
+  const missionRole = convMission && typeof convMission === 'object' ? (convMission as { npcRole: string }).npcRole : '';
+  const missionName = convMission && typeof convMission === 'object' ? (convMission as { npcName: string }).npcName : '';
 
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col -mx-4 sm:-mx-6">
@@ -140,9 +154,7 @@ export default function MissionConversation() {
         <div className="flex-1 min-w-0">
           <h1 className="font-semibold text-gray-900 dark:text-white truncate">{missionTitle}</h1>
           <p className="text-xs text-gray-500">
-            {typeof conversation.missionId === 'object' && conversation.missionId.npcRole
-              ? `Speaking with ${conversation.missionId.npcName}`
-              : 'Conversation'}
+            {missionRole ? `Speaking with ${missionName}` : 'Conversation'}
           </p>
         </div>
         {complete && (
