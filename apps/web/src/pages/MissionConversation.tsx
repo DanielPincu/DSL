@@ -14,6 +14,7 @@ interface ConversationData {
   id: string;
   messages: Message[];
   status: string;
+  language?: string;
   missionId: { title: string; slug: string; npcName?: string; npcRole?: string };
 }
 
@@ -185,7 +186,7 @@ export default function MissionConversation() {
         <div className="sticky top-0 z-10 bg-white/90 dark:bg-danish-dark/90 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 px-4 py-3">
           <div className="flex items-center justify-center">
             <span className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-              💡 Say <kbd className="px-2 py-0.5 rounded-lg bg-white dark:bg-gray-700 font-mono text-sm font-semibold text-danish-red border-2 border-danish-red/30 dark:border-danish-red/50 shadow-sm">Hej</kbd> to start the conversation
+              💡 Say <kbd className="px-2 py-0.5 rounded-lg bg-white dark:bg-gray-700 font-mono text-sm font-semibold text-danish-red border-2 border-danish-red/30 dark:border-danish-red/50 shadow-sm">{conversation?.language === "es" ? "Hola" : "Hej"}</kbd> to start the conversation
             </span>
           </div>
         </div>
@@ -362,7 +363,7 @@ export default function MissionConversation() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Skriv på dansk... (Write in Danish)"
+              placeholder={conversation?.language === "es" ? "Escribe en español... (Write in Spanish)" : "Skriv på dansk... (Write in Danish)"}
               className="input flex-1"
               disabled={sending}
               autoFocus
