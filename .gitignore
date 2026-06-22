@@ -29,4 +29,9 @@ coverage/
 # Optional caches
 .cache/
 .npm/
-.DS_Store
+
+# Vite
+.vite/
+
+# TypeScript
+*.tsbuildinfo
