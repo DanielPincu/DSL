@@ -38,7 +38,7 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
-app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 20 }));
+app.use('/api/auth', rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
 app.use(limiter);
 
 // Body parsing
