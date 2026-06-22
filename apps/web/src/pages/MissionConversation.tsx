@@ -20,6 +20,8 @@ interface SendMessageResponse {
   autoPromoted?: string | null;
   passed?: boolean;
   passedReason?: string;
+  reset?: boolean;
+  reason?: string;
 }
 
 export default function MissionConversation() {
@@ -78,6 +80,11 @@ export default function MissionConversation() {
 
       if (data.autoPromoted) {
         setPromoted(data.autoPromoted);
+      }
+
+      if (data.reset) {
+        navigate(`/missions/${slug}`);
+        return;
       }
 
       if (data.conversationComplete) {

@@ -10,6 +10,13 @@ import { getAIProvider, buildConversationAIPrompt } from '../ai/ai.service.js';
 import type { AIFeedback, CEFRLevel } from '@dls/shared';
 import { getLevelMissionsWithLock } from '../missions/mission.controller.js';
 
+class ResetError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ResetError';
+  }
+}
+
 const NEXT_LEVEL: Record<string, CEFRLevel | null> = {
   A1: 'A2',
   A2: 'B1',
@@ -18,28 +25,21 @@ const NEXT_LEVEL: Record<string, CEFRLevel | null> = {
   C1: null,
 };
 
-/**
- * Check if the user has completed all missions at their current level.
- * If so, auto-promote them to the next level.
- */
 async function checkAutoPromotion(userId: string): Promise<CEFRLevel | null> {
   const user = await User.findById(userId);
   if (!user) return null;
 
-  // Don't auto-promote if user manually overrode their level
   if (user.levelSource === 'user_override') return null;
 
   const currentLevel = getActiveLevel(user);
   if (!currentLevel) return null;
 
   const nextLevel = NEXT_LEVEL[currentLevel];
-  if (!nextLevel) return null; // Already at max level
+  if (!nextLevel) return null;
 
-  // Count missions at current level
   const levelMissions = await Mission.countDocuments({ level: currentLevel });
   if (levelMissions === 0) return null;
 
-  // Count completed missions at current level
   const missionIds = (await Mission.find({ level: currentLevel }).select('_id')).map((m) => m._id);
   const completed = await Conversation.countDocuments({
     userId,
@@ -48,14 +48,12 @@ async function checkAutoPromotion(userId: string): Promise<CEFRLevel | null> {
   });
 
   if (completed >= levelMissions) {
-    // All missions completed — promote!
     await User.findByIdAndUpdate(userId, {
       estimatedLevel: nextLevel,
       levelConfidence: Math.min((user.levelConfidence || 50) + 5, 100),
     });
     return nextLevel;
   }
-
   return null;
 }
 
@@ -63,31 +61,26 @@ export async function startConversation(req: AuthRequest, res: Response): Promis
   try {
     const userId = req.userId!;
     const { missionId } = req.body;
-
     const mission = await Mission.findById(missionId);
     if (!mission) {
       res.status(404).json({ success: false, error: 'Mission not found' });
       return;
     }
-
     const user = await User.findById(userId);
     if (!user) {
       res.status(404).json({ success: false, error: 'User not found' });
       return;
     }
-
     const activeLevel = getActiveLevel(user) || 'A1';
 
-    // Verify the mission is at the user's current level
     if (mission.level !== activeLevel) {
       res.status(403).json({
         success: false,
-        error: `This mission is level ${mission.level}. Your current level is ${activeLevel}. Complete all ${activeLevel} missions first.`,
+        error: `This mission is level ${mission.level}. Your current level is ${activeLevel}.`,
       });
       return;
     }
 
-    // Check strict linear progression within the level
     const { missions } = await getLevelMissionsWithLock(userId, activeLevel);
     const prog = missions.find((m) => m.id === missionId);
     if (prog?.locked) {
@@ -98,7 +91,6 @@ export async function startConversation(req: AuthRequest, res: Response): Promis
       return;
     }
 
-    // Check for existing active conversation
     const existing = await Conversation.findOne({ userId, missionId, status: 'active' });
     if (existing) {
       res.json({ success: true, data: existing.toJSON() });
@@ -133,7 +125,8 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
 
     const conversation = await Conversation.findById(conversationId);
     if (!conversation) {
-      res.status(404).json({ success: false, error: 'Conversation not found' });
+      // Already deleted (e.g. reset) — tell frontend to redirect
+      res.json({ success: true, data: { reset: true, reason: 'Conversation was reset' } });
       return;
     }
 
@@ -161,14 +154,12 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
 
     const activeLevel = getActiveLevel(user) || 'A1';
 
-    // Add user message
     conversation.messages.push({
       role: 'user',
       content: userMessage,
       createdAt: new Date().toISOString(),
     });
 
-    // Get AI response
     const provider = getAIProvider();
     const aiPrompt = buildConversationAIPrompt(
       userMessage,
@@ -176,14 +167,13 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
       mission.npcRole,
       mission.scenarioPrompt,
       activeLevel,
-      conversation.messages.slice(-10) // Last 10 messages for context
+      conversation.messages.slice(-10)
     );
 
     let aiFeedback: AIFeedback;
     try {
       aiFeedback = await provider.generateJSON<AIFeedback>(aiPrompt);
     } catch {
-      // Fallback response if AI fails
       aiFeedback = {
         npcReply: 'Hej! Det lyder godt. Fortæl mig mere.',
         corrections: [],
@@ -195,18 +185,15 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
       };
     }
 
-    // Add AI reply to conversation
     conversation.messages.push({
       role: 'assistant',
       content: aiFeedback.npcReply,
       createdAt: new Date().toISOString(),
     });
 
-    // Save conversation
     await conversation.save();
 
-    // Create attempt record
-    const attempt = await Attempt.create({
+    await Attempt.create({
       userId,
       missionId: conversation.missionId,
       conversationId: conversation._id,
@@ -222,12 +209,10 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
       aiFeedback.detectedMistakes && aiFeedback.detectedMistakes.length > 0
         ? aiFeedback.detectedMistakes
         : aiFeedback.corrections || [];
-    const mistakes = mistakesSource.filter(
-      (c) => c.original && c.original.trim().length > 0
-    );
+    const mistakesArr = mistakesSource.filter((c) => c.original && c.original.trim().length > 0);
 
-    if (mistakes.length > 0) {
-      const mistakeDocs = mistakes.map((m) => ({
+    if (mistakesArr.length > 0) {
+      const mistakeDocs = mistakesArr.map((m) => ({
         userId,
         missionId: conversation.missionId,
         conversationId: conversation._id,
@@ -237,11 +222,9 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
         type: m.type || 'grammar',
         mastered: false,
       }));
-
       await Mistake.insertMany(mistakeDocs);
 
-      // Update user weaknesses
-      const mistakeTypes = [...new Set(mistakes.map((m) => m.type).filter(Boolean))] as string[];
+      const mistakeTypes = [...new Set(mistakesArr.map((m) => m.type).filter(Boolean))] as string[];
       if (mistakeTypes.length > 0) {
         await User.findByIdAndUpdate(userId, {
           $addToSet: { weaknesses: { $each: mistakeTypes } },
@@ -259,40 +242,54 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
       aiFeedback.npcReply.toLowerCase().includes('farvel') ||
       aiFeedback.npcReply.toLowerCase().includes('goodbye');
 
-    // Anti-cheat: require at least 3 user messages before "farvel" counts
     const userMsgCount = conversation.messages.filter((m) => m.role === 'user').length;
+
     if (isGoodbye && userMsgCount >= 3) {
-      // AI quality gate: only complete if the user demonstrated sufficient Danish
       if (aiFeedback.passed) {
         conversation.status = 'completed';
         conversation.finalScore = aiFeedback.score || 70;
         await conversation.save();
-
-        // Check if all missions at this level are done → promote
         autoPromoted = await checkAutoPromotion(userId);
-      } else {
-        // Not passed — keep conversation active, tell user what to improve
-        const reason = aiFeedback.passedReason || 'prøv igen og øv dig mere';
-        conversation.messages.push({
-          role: 'assistant',
-          content: `Du er ikke helt klar endnu. ${reason}. Prøv igen! (You're not quite ready yet. ${reason}. Try again!)`,
-          createdAt: new Date().toISOString(),
+
+        res.json({
+          success: true,
+          data: {
+            conversation: conversation.toJSON(),
+            aiReply: aiFeedback.npcReply,
+            corrections: aiFeedback.corrections || [],
+            feedback: aiFeedback.feedback || '',
+            score: aiFeedback.score || 70,
+            conversationComplete: true,
+            autoPromoted,
+            passed: true,
+          },
         });
-        await conversation.save();
-        aiFeedback.npcReply = `Du er ikke helt klar endnu. ${reason}. Prøv igen! (You're not quite ready yet. ${reason}. Try again!)`;
+        return;
+      } else {
+        // Not passed — full reset: delete conversation, start fresh
+        const failReason = aiFeedback.passedReason || 'prøv igen og øv dig mere';
+        await Mistake.deleteMany({ conversationId: conversation._id });
+        await Attempt.deleteMany({ conversationId: conversation._id });
+        await Conversation.findByIdAndDelete(conversation._id);
+        res.json({
+          success: true,
+          data: { reset: true, reason: failReason },
+        });
+        return;
       }
     } else if (isGoodbye && userMsgCount < 3) {
-      // Tell the user they need to actually practice first
-      conversation.messages.push({
-        role: 'assistant',
-        content: 'Du har ikke øvet dig nok endnu! Prøv at fortsætte samtalen. (You haven\'t practiced enough yet — please continue the conversation!)',
-        createdAt: new Date().toISOString(),
+      // Anti-cheat: not enough practice — full reset
+      await Mistake.deleteMany({ conversationId: conversation._id });
+      await Attempt.deleteMany({ conversationId: conversation._id });
+      await Conversation.findByIdAndDelete(conversation._id);
+      res.json({
+        success: true,
+        data: { reset: true, reason: 'Du skrev for få beskeder. Skriv mindst 3 beskeder på dansk før du siger farvel.' },
       });
-      await conversation.save();
-      // Override the AI reply in the response
-      aiFeedback.npcReply = 'Du har ikke øvet dig nok endnu! Prøv at fortsætte samtalen. (You haven\'t practiced enough yet — please continue the conversation!)';
+      return;
     }
 
+    // Normal (non-goodbye) response
     res.json({
       success: true,
       data: {
@@ -301,13 +298,19 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
         corrections: aiFeedback.corrections || [],
         feedback: aiFeedback.feedback || '',
         score: aiFeedback.score || 70,
-        conversationComplete: isGoodbye && userMsgCount >= 3 && aiFeedback.passed,
-        autoPromoted,
-        passed: aiFeedback.passed,
-        passedReason: aiFeedback.passedReason,
+        conversationComplete: false,
+        autoPromoted: null,
+        passed: true,
       },
     });
   } catch (error) {
+    if (error instanceof ResetError) {
+      res.json({
+        success: true,
+        data: { reset: true, reason: error.message },
+      });
+      return;
+    }
     console.error('Send message error:', error);
     res.status(500).json({ success: false, error: 'Failed to send message' });
   }
@@ -320,7 +323,6 @@ export async function getMyConversations(req: AuthRequest, res: Response): Promi
       .sort({ updatedAt: -1 })
       .populate('missionId', 'title slug category level')
       .limit(50);
-
     res.json({ success: true, data: conversations });
   } catch (error) {
     console.error('Get conversations error:', error);
@@ -335,17 +337,14 @@ export async function getConversation(req: AuthRequest, res: Response): Promise<
       'missionId',
       'title slug category level npcName npcRole'
     );
-
     if (!conversation) {
       res.status(404).json({ success: false, error: 'Conversation not found' });
       return;
     }
-
     if (conversation.userId.toString() !== userId) {
       res.status(403).json({ success: false, error: 'Not authorized' });
       return;
     }
-
     res.json({ success: true, data: conversation.toJSON() });
   } catch (error) {
     console.error('Get conversation error:', error);
