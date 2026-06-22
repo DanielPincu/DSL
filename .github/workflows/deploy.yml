@@ -10,38 +10,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build
-        run: |
-          npm run build -w packages/shared
-          npx tsc --noEmit -p apps/api/tsconfig.json
-          cd apps/web && npx vite build
-
-      - name: Deploy to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: ".,!node_modules"
-          target: /opt/danish-life-simulator
-          strip_components: 0
-
-      - name: Restart app on VPS
+      - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /opt/danish-life-simulator
-            npm install --production
-            pm2 restart dls-api || pm2 start apps/api/src/index.ts --name dls-api --interpreter npx --interpreter-args tsx
-            pm2 save
+            cd /home/rtty/danish-life-simulator
+            git pull
+            cd apps/api && npx tsc && cd ..
+            cd apps/web && npx vite build && cd ..
+            echo '${{ secrets.VPS_SUDO_PASS }}' | sudo -S cp -r apps/web/dist/* /var/www/html/
+            echo '${{ secrets.VPS_SUDO_PASS }}' | sudo -S chown -R www-data:www-data /var/www/html/
+            pm2 restart dls-api
