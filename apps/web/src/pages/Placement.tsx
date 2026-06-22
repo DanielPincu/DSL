@@ -24,6 +24,7 @@ const CEFR_DESCRIPTIONS: Record<CEFRLevel, string> = {
   A2: 'Elementary - Can communicate in simple, routine tasks. Can describe your background.',
   B1: 'Intermediate - Can handle most situations while traveling. Can produce simple connected text.',
   B2: 'Upper Intermediate - Can interact with fluency. Can understand complex texts.',
+  C1: 'Advanced - Can express ideas fluently and spontaneously. Can use language flexibly for social and professional purposes.',
 };
 
 export default function Placement() {
@@ -206,7 +207,7 @@ export default function Placement() {
 
               {showOverride && (
                 <div className="grid grid-cols-2 gap-2 pt-2">
-                  {(['A1', 'A2', 'B1', 'B2'] as CEFRLevel[]).map((level) => (
+                  {(['A1', 'A2', 'B1', 'B2', 'C1'] as CEFRLevel[]).map((level) => (
                     <button
                       key={level}
                       onClick={() => handleOverride(level)}

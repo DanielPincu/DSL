@@ -64,6 +64,7 @@ export function buildSystemPrompt(
     A2: 'Use simple Danish with common phrases. Introduce some past tense. Provide occasional English help for complex words. Correct major errors kindly.',
     B1: 'Use moderate Danish with everyday vocabulary. Use various tenses naturally. Explain corrections briefly in English. Only correct significant errors.',
     B2: 'Use natural Danish at near-native pace. Use idiomatic expressions. Correct subtle errors. Challenge the user with more complex topics.',
+    C1: 'Use advanced Danish at fluent pace. Use idiomatic expressions, nuanced vocabulary, and complex sentence structures. Discuss abstract and specialised topics. Correct very subtle errors. Challenge the user with sophisticated discussions.',
   };
 
   const historySection =

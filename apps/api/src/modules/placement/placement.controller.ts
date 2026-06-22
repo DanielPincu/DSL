@@ -69,7 +69,7 @@ export async function sendPlacementMessage(req: AuthRequest, res: Response): Pro
     // Check if assessment is complete
     if (result.estimatedLevel) {
       const level = result.estimatedLevel;
-      if (!['A1', 'A2', 'B1', 'B2'].includes(level)) {
+      if (!['A1', 'A2', 'B1', 'B2', 'C1'].includes(level)) {
         res.status(400).json({ success: false, error: 'Invalid level assessment' });
         return;
       }

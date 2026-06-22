@@ -10,10 +10,12 @@ import { getAIProvider, buildConversationAIPrompt } from '../ai/ai.service.js';
 import type { AIFeedback, CEFRLevel } from '@dls/shared';
 import mongoose from 'mongoose';
 
-const NEXT_LEVEL: Record<string, CEFRLevel> = {
+const NEXT_LEVEL: Record<string, CEFRLevel | null> = {
   A1: 'A2',
   A2: 'B1',
   B1: 'B2',
+  B2: 'C1',
+  C1: null,
 };
 
 /**

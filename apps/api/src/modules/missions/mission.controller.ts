@@ -6,7 +6,7 @@ import type { MissionLevelProgress, CEFRLevel } from '@dls/shared';
 import User from '../users/user.model.js';
 import { getActiveLevel } from '@dls/shared';
 
-const CEFR_ORDER: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2'];
+const CEFR_ORDER: CEFRLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
 
 /**
  * Get the level the user should be working on.

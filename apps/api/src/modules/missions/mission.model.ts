@@ -30,7 +30,7 @@ const missionSchema = new Schema<IMission>(
     },
     level: {
       type: String,
-      enum: ['A1', 'A2', 'B1', 'B2'],
+      enum: ['A1', 'A2', 'B1', 'B2', 'C1'],
       required: true,
     },
     description: { type: String, required: true },
