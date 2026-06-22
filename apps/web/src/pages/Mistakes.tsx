@@ -171,7 +171,7 @@ export default function Mistakes() {
                       : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50'
                   }`}
                 >
-                  {mistake.mastered ? '↩️ Undo mastered' : '✅ Mark as mastered'}
+                  {mistake.mastered ? '✕ Unmark' : '🎯 Mark as mastered'}
                 </button>
               </div>
             </div>
