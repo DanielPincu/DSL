@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
-import type { Mission, CEFRLevel, Conversation } from '@dls/shared';
+import type { MissionWithProgress, CEFRLevel, Conversation } from '@dls/shared';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
 import { getActiveLevel } from '@dls/shared';
@@ -28,14 +28,14 @@ const LEVEL_COLORS: Record<CEFRLevel, string> = {
 
 export default function Missions() {
   const { user } = useAuth();
-  const [missions, setMissions] = useState<Mission[]>([]);
+  const [missions, setMissions] = useState<MissionWithProgress[]>([]);
   const [activeConvs, setActiveConvs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<CEFRLevel | 'all'>('all');
 
   useEffect(() => {
     Promise.all([
-      api.get<Mission[]>('/missions'),
+      api.get<MissionWithProgress[]>('/missions'),
       api.get<Conversation[]>('/conversations/me'),
     ]).then(([missionsData, convsData]) => {
       setMissions(missionsData);
@@ -44,7 +44,9 @@ export default function Missions() {
       const activeMap: Record<string, string> = {};
       for (const conv of convsData) {
         if (conv.status === 'active') {
-          const mId = typeof conv.missionId === 'string' ? conv.missionId : (conv.missionId as { id?: string })?.id || '';
+          const mId = typeof conv.missionId === 'string'
+            ? conv.missionId
+            : (conv.missionId as Record<string, string>)?.id || (conv.missionId as Record<string, string>)?._id || '';
           if (mId) activeMap[mId] = conv.id;
         }
       }
@@ -105,18 +107,20 @@ export default function Missions() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((mission) => {
             const activeConvId = activeConvs[mission.id];
-            return (
-            <Link
-              key={mission.slug}
-              to={activeConvId ? `/missions/${mission.slug}/conversation/${activeConvId}` : `/missions/${mission.slug}`}
-              className="card-hover group"
-            >
+            const isLocked = mission.locked && !activeConvId;
+            const cardContent = (
+              <>
               <div className="flex items-start justify-between mb-3">
-                <span className="text-3xl">{CATEGORY_ICONS[mission.category] || '🎯'}</span>
+                <span className="text-3xl">{isLocked ? '🔒' : CATEGORY_ICONS[mission.category] || '🎯'}</span>
                 <div className="flex gap-1.5">
                   {activeConvId && (
                     <span className="badge bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs">
                       Continue 💬
+                    </span>
+                  )}
+                  {isLocked && (
+                    <span className="badge bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs">
+                      Locked 🔒
                     </span>
                   )}
                   <span className={`badge text-xs ${LEVEL_COLORS[mission.level]}`}>
@@ -125,7 +129,7 @@ export default function Missions() {
                 </div>
               </div>
 
-              <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-danish-red transition-colors">
+              <h3 className="font-bold text-gray-900 dark:text-white transition-colors">
                 {mission.title}
               </h3>
 
@@ -139,9 +143,33 @@ export default function Missions() {
                 <span className="text-sm text-gray-400">{mission.npcRole}</span>
               </div>
 
-              <div className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-danish-red opacity-0 group-hover:opacity-100 transition-opacity">
-                {activeConvId ? 'Continue →' : 'Start mission →'}
+              <div className="mt-3 inline-flex items-center gap-1 text-sm font-medium transition-opacity">
+                {activeConvId && 'Continue →'}
+                {isLocked && (
+                  <span className="text-gray-400 text-xs">{mission.lockedReason || 'Locked'}</span>
+                )}
+                {!activeConvId && !isLocked && (
+                  <span className="text-danish-red opacity-0 group-hover:opacity-100">Start mission →</span>
+                )}
               </div>
+              </>
+            );
+
+            if (isLocked) {
+              return (
+                <div key={mission.slug} className="card opacity-60 cursor-not-allowed group">
+                  {cardContent}
+                </div>
+              );
+            }
+
+            return (
+            <Link
+              key={mission.slug}
+              to={activeConvId ? `/missions/${mission.slug}/conversation/${activeConvId}` : `/missions/${mission.slug}`}
+              className="card-hover group"
+            >
+              {cardContent}
             </Link>
             );
           })}

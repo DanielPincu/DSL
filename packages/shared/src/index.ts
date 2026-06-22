@@ -83,6 +83,11 @@ export interface Mission {
   updatedAt: string;
 }
 
+export interface MissionWithProgress extends Mission {
+  locked: boolean;
+  lockedReason?: string;
+}
+
 // Conversation
 export interface Message {
   role: MessageRole;

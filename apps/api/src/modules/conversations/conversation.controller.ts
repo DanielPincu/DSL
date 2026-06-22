@@ -6,9 +6,43 @@ import Attempt from '../attempts/attempt.model.js';
 import Mistake from '../mistakes/mistake.model.js';
 import User from '../users/user.model.js';
 import { getActiveLevel } from '@dls/shared';
+import type { CEFRLevel } from '@dls/shared';
 import { getAIProvider, buildConversationAIPrompt } from '../ai/ai.service.js';
 import type { AIFeedback } from '@dls/shared';
 import mongoose from 'mongoose';
+
+const LEVEL_ORDER: Record<CEFRLevel, number> = { A1: 0, A2: 1, B1: 2, B2: 3 };
+
+/** Check if a mission is unlocked for the user (linear progression) */
+async function isMissionUnlocked(userId: string, missionId: string): Promise<{ unlocked: boolean; reason?: string }> {
+  const allMissions = await Mission.find().sort({ level: 1, createdAt: 1 });
+  const completedIds = (
+    await Conversation.distinct('missionId', { userId, status: 'completed' })
+  ).map((id) => id.toString());
+
+  const sorted = allMissions.sort((a, b) => {
+    const ld = LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level];
+    return ld !== 0 ? ld : a.createdAt.getTime() - b.createdAt.getTime();
+  });
+
+  const targetIdx = sorted.findIndex((m) => m._id.toString() === missionId);
+  if (targetIdx === -1) return { unlocked: false, reason: 'Mission not found' };
+
+  // First mission is always unlocked
+  if (targetIdx === 0) return { unlocked: true };
+
+  // Check that all previous missions are completed
+  for (let i = 0; i < targetIdx; i++) {
+    if (!completedIds.includes(sorted[i]._id.toString())) {
+      return {
+        unlocked: false,
+        reason: `Complete "${sorted[i].title}" first`,
+      };
+    }
+  }
+
+  return { unlocked: true };
+}
 
 export async function startConversation(req: AuthRequest, res: Response): Promise<void> {
   try {
@@ -18,6 +52,13 @@ export async function startConversation(req: AuthRequest, res: Response): Promis
     const mission = await Mission.findById(missionId);
     if (!mission) {
       res.status(404).json({ success: false, error: 'Mission not found' });
+      return;
+    }
+
+    // Check linear progression
+    const { unlocked, reason } = await isMissionUnlocked(userId, missionId);
+    if (!unlocked) {
+      res.status(403).json({ success: false, error: reason || 'Complete previous missions first' });
       return;
     }
 
@@ -187,10 +228,22 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
       aiFeedback.npcReply.toLowerCase().includes('farvel') ||
       aiFeedback.npcReply.toLowerCase().includes('goodbye');
 
-    if (isGoodbye) {
+    // Anti-cheat: require at least 3 user messages before "farvel" counts
+    const userMsgCount = conversation.messages.filter((m) => m.role === 'user').length;
+    if (isGoodbye && userMsgCount >= 3) {
       conversation.status = 'completed';
       conversation.finalScore = aiFeedback.score || 70;
       await conversation.save();
+    } else if (isGoodbye && userMsgCount < 3) {
+      // Tell the user they need to actually practice first
+      conversation.messages.push({
+        role: 'assistant',
+        content: 'Du har ikke øvet dig nok endnu! Prøv at fortsætte samtalen. (You haven\'t practiced enough yet — please continue the conversation!)',
+        createdAt: new Date().toISOString(),
+      });
+      await conversation.save();
+      // Override the AI reply in the response
+      aiFeedback.npcReply = 'Du har ikke øvet dig nok endnu! Prøv at fortsætte samtalen. (You haven\'t practiced enough yet — please continue the conversation!)';
     }
 
     res.json({
