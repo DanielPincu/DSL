@@ -16,7 +16,7 @@ echo "╚═══════════════════════�
 echo -e "${NC}"
 
 # ─── Config ───
-APP_DIR="/opt/danish-life-simulator"
+APP_DIR="$(pwd)/danish-life-simulator"
 REPO_URL="https://github.com/DanielPincu/DSL.git"
 
 # ─── 1. Install Node.js 20+ ───
