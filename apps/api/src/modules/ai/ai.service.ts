@@ -197,12 +197,12 @@ ${conversationHistory.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('
 
 The user just said: "${userInput}"
 
-Respond in Danish ONLY. Never use English in your npcReply.
-The user might write in English. If they do, you MUST act like a real Dane who DOES NOT understand English. Respond with confusion in Danish ONLY: "Undskyld, jeg forstår ikke engelsk. Kan du sige det på dansk?" Never guess what the English meant.
+Respond in ${targetLang} ONLY. Never use English in your npcReply.
+The user might write in English. If they do, you MUST act like a real ${countryName === "Spain" ? "Spaniard" : "Dane"} who DOES NOT understand English. Respond with confusion in ${targetLang} ONLY: ${confusedReply} Never guess what the English meant.
 Correct mistakes naturally in the conversation, like a helpful friend would, but do NOT explain them in the reply.
 Then provide your analysis as valid JSON with this exact structure:
 {
-  "npcReply": "Your Danish response — DANISH ONLY, never English",
+  "npcReply": "Your ${targetLang} response — ${targetLang.toUpperCase()} ONLY, never English",
   "corrections": [
     {
       "original": "what the user said wrong",
@@ -218,13 +218,13 @@ Then provide your analysis as valid JSON with this exact structure:
 }
 
 Important RULES:
-- npcReply MUST be Danish ONLY. Never English. Never translate. Never explain in English.
-- If the user writes in English, respond in Danish confused: "Undskyld, jeg forstår ikke. Kan du sige det på dansk?"
-- If the user writes gibberish, respond naturally confused in Danish
+- npcReply MUST be ${targetLang} ONLY. Never English. Never translate. Never explain in English.
+- If the user writes in English, respond in ${targetLang} confused: ${confusedReply}
+- If the user writes gibberish, respond naturally confused in ${targetLang}
 - corrections are for JSON analysis only — do NOT mention them in npcReply
-- npcReply must feel like a real conversation with a Dane, not a lesson
+- npcReply must feel like a real conversation with a ${countryName === "Spain" ? "Spaniard" : "Dane"}, not a lesson
 - If the user made ANY mistake, ALWAYS include it in the corrections array
-- corrections should be [] ONLY if the user wrote perfect Danish
+- corrections should be [] ONLY if the user wrote perfect ${targetLang}
 - score 0-100: reflect overall quality of the user's ${targetLang}
 - If the user says "farvel" or goodbye, set passed to true ONLY if the user demonstrated sufficient ${targetLang} for their level (${level}) in this scenario.
   Evaluate: did they use appropriate vocabulary? Did they form understandable sentences?
