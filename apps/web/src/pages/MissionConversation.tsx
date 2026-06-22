@@ -149,25 +149,27 @@ export default function MissionConversation() {
         )}
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {/* End conversation hint */}
-        {!complete && messages.length > 0 && (
-          <div className="text-center space-y-2">
+      {/* Sticky counter + hint bar */}
+      {!complete && !resetMessage && messages.length > 0 && (
+        <div className="sticky top-0 z-10 bg-white/90 dark:bg-danish-dark/90 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 px-4 py-2">
+          <div className="flex items-center justify-center gap-3">
             {(() => {
               const msgCount = countMeaningful(messages);
               return (
-                <span className={"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs " + (msgCount >= 5 ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400")}>
+                <span className={"inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium " + (msgCount >= 5 ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300" : "bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400")}>
                   📝 {Math.min(msgCount, 5)}/5 messages
                 </span>
               );
             })()}
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400">
-              💡 Say <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-gray-700 font-mono text-[11px] border border-gray-300 dark:border-gray-600">farvel</kbd> when you're done
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400">
+              💡 Say <kbd className="px-1 py-0.5 rounded bg-white dark:bg-gray-700 font-mono text-[10px] border border-gray-300 dark:border-gray-600">farvel</kbd> to finish
             </span>
           </div>
-        )}
+        </div>
+      )}
 
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {messages.map((msg, i) => (
           <div
             key={i}
@@ -224,23 +226,6 @@ export default function MissionConversation() {
               </div>
               <span className="text-sm font-bold text-danish-red">{lastScore}%</span>
             </div>
-          </div>
-        )}
-
-        {/* Reset message — stays until user clicks */}
-        {resetMessage && (
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700 rounded-2xl p-6 text-center">
-            <span className="text-5xl block mb-3">💪</span>
-            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Not quite there yet</h3>
-            <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-4 leading-relaxed">
-              {resetMessage}
-            </p>
-            <button
-              onClick={() => navigate(`/missions/${slug}`)}
-              className="btn bg-danish-red text-white hover:bg-red-700 shadow-lg"
-            >
-              Try Again
-            </button>
           </div>
         )}
 
@@ -307,6 +292,25 @@ export default function MissionConversation() {
               className="btn-primary text-sm"
             >
               Try Another Mission
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Reset banner — always visible above input */}
+      {resetMessage && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-t-2 border-yellow-300 dark:border-yellow-700 px-4 py-6">
+          <div className="max-w-lg mx-auto text-center">
+            <span className="text-5xl block mb-3">💪</span>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-2">Not quite there yet</h3>
+            <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-4 leading-relaxed">
+              {resetMessage}
+            </p>
+            <button
+              onClick={() => navigate(`/missions/${slug}`)}
+              className="btn bg-danish-red text-white hover:bg-red-700 shadow-lg"
+            >
+              Try Again
             </button>
           </div>
         </div>
