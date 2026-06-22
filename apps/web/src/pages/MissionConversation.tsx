@@ -205,7 +205,7 @@ export default function MissionConversation() {
               );
             })()}
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400">
-              💡 Say <kbd className="px-1 py-0.5 rounded bg-white dark:bg-gray-700 font-mono text-[10px] border border-gray-300 dark:border-gray-600">farvel</kbd> to finish
+              💡 Say <kbd className="px-1 py-0.5 rounded bg-white dark:bg-gray-700 font-mono text-[10px] border border-gray-300 dark:border-gray-600">{conversation?.language === "es" ? "adiós" : "farvel"}</kbd> to finish
             </span>
           </div>
         </div>
@@ -279,7 +279,7 @@ export default function MissionConversation() {
               {notPassedReason}
             </p>
             <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-              Keep practicing and try "farvel" again when you're ready!
+              Keep practicing and try "{conversation?.language === "es" ? "adiós" : "farvel"}" again when you're ready!
             </p>
           </div>
         )}
