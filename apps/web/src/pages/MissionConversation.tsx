@@ -4,6 +4,12 @@ import { api } from '../api/client';
 import type { Message, Correction } from '@dls/shared';
 import LoadingSpinner from '../components/LoadingSpinner';
 
+interface ChatMessage {
+  role: string;
+  content: string;
+  corrections?: Correction[];
+}
+
 interface ConversationData {
   id: string;
   messages: Message[];
@@ -24,7 +30,7 @@ interface SendMessageResponse {
   reason?: string;
 }
 
-function countMeaningful(messages: { role: string; content: string }[]): number {
+function countMeaningful(messages: ChatMessage[]): number {
   return messages.filter((m) => {
     if (m.role !== 'user') return false;
     const text = m.content.toLowerCase().trim();
@@ -38,11 +44,10 @@ export default function MissionConversation() {
   const { slug, conversationId } = useParams<{ slug: string; conversationId: string }>();
   const navigate = useNavigate();
   const [conversation, setConversation] = useState<ConversationData | null>(null);
-  const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [input, setInput] = useState('');
-  const [showCorrections, setShowCorrections] = useState<Correction[]>([]);
   const [lastFeedback, setLastFeedback] = useState('');
   const [lastScore, setLastScore] = useState(0);
   const [complete, setComplete] = useState(false);
@@ -78,7 +83,6 @@ export default function MissionConversation() {
     setInput('');
     setMessages((prev) => [...prev, { role: 'user', content: userMsg }]);
     setSending(true);
-    setShowCorrections([]);
     setNotPassedReason(null);
 
     try {
@@ -93,8 +97,23 @@ export default function MissionConversation() {
         return;
       }
 
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.aiReply }]);
-      setShowCorrections(data.corrections || []);
+      // Attach corrections to the last user message
+      const corrections = data.corrections || [];
+      if (corrections.length > 0) {
+        setMessages((prev) => {
+          const updated = [...prev];
+          for (let i = updated.length - 1; i >= 0; i--) {
+            if (updated[i].role === 'user') {
+              updated[i] = { ...updated[i], corrections };
+              break;
+            }
+          }
+          return [...updated, { role: 'assistant', content: data.aiReply }];
+        });
+      } else {
+        setMessages((prev) => [...prev, { role: 'assistant', content: data.aiReply }]);
+      }
+
       setLastFeedback(data.feedback || '');
       setLastScore(data.score || 0);
 
@@ -183,49 +202,45 @@ export default function MissionConversation() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-3 ${
-                msg.role === 'user'
-                  ? 'bg-danish-red text-white rounded-br-md'
-                  : 'bg-white dark:bg-danish-card border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-bl-md'
-              }`}
-            >
-              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+          <div key={i} className="space-y-1.5">
+            <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-3 ${
+                  msg.role === 'user'
+                    ? 'bg-danish-red text-white rounded-br-md'
+                    : 'bg-white dark:bg-danish-card border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-bl-md'
+                }`}
+              >
+                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+              </div>
             </div>
+            {/* Inline corrections under user messages */}
+            {msg.role === 'user' && msg.corrections && msg.corrections.length > 0 && (
+              <div className="flex justify-end">
+                <div className="max-w-[85%] sm:max-w-[70%] bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-4 py-2.5 space-y-1.5">
+                  <p className="text-[11px] font-semibold text-blue-600 dark:text-blue-300 uppercase tracking-wide">💡 rettelser (corrections)</p>
+                  {msg.corrections.map((c, ci) => (
+                    <div key={ci} className="text-xs">
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-red-500 line-through">{c.original}</span>
+                        <span className="text-green-600 dark:text-green-400 font-medium">→ {c.corrected}</span>
+                      </div>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 ml-1">
+                        {c.explanation}
+                        <span className="ml-1.5 inline-block px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                          {c.type}
+                        </span>
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ))}
 
-        {/* Corrections display */}
-        {(showCorrections || []).length > 0 && (
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4">
-            <p className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
-              📝 Corrections
-            </p>
-            <div className="space-y-2">
-              {showCorrections.map((c, i) => (
-                <div key={i} className="text-sm">
-                  <div className="flex items-start gap-2">
-                    <span className="text-red-500 line-through">{c.original}</span>
-                    <span className="text-green-600 dark:text-green-400">→ {c.corrected}</span>
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 ml-2">
-                    {c.explanation}
-                    <span className="ml-1 badge text-xs bg-gray-200 dark:bg-gray-700">
-                      {c.type}
-                    </span>
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Feedback */}
-        {lastFeedback && (showCorrections || []).length > 0 && (
+        {/* Feedback banner */}
+        {lastFeedback && (
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">{lastFeedback}</p>
             <div className="mt-2 flex items-center gap-2">
