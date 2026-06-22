@@ -354,6 +354,8 @@ export default function MissionConversation() {
               placeholder="Skriv på dansk... (Write in Danish)"
               className="input flex-1"
               disabled={sending}
+              autoFocus
+              enterKeyHint="send"
             />
             <button
               type="submit"

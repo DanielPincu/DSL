@@ -136,7 +136,7 @@ export default function Missions() {
                   )}
                   {isCompleted && (
                     <span className="badge bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs">
-                      ✅ Done
+                      Passed ✅
                     </span>
                   )}
                 </div>
@@ -167,7 +167,7 @@ export default function Missions() {
                 {isLocked && (
                   <span className="text-gray-400 text-xs">{mission.lockedReason || 'Locked'}</span>
                 )}
-                {isCompleted && <span className="text-green-600 dark:text-green-400">Review →</span>}
+                {isCompleted && <span className="text-green-600 dark:text-green-400">Passed ✅</span>}
                 {activeConvId && !isCompleted && <span className="text-danish-red">Continue →</span>}
                 {!activeConvId && !isCompleted && !isLocked && (
                   <span className="text-danish-red opacity-0 group-hover:opacity-100">Start mission →</span>

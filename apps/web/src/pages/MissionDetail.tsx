@@ -46,7 +46,7 @@ export default function MissionDetail() {
   }, [slug, navigate]);
 
   async function handleStart() {
-    if (!mission || mission.locked || mission.completed) return;
+    if (!mission || mission.locked) return;
     setStarting(true);
     try {
       const data = await api.post<{ id: string }>('/conversations/start', {
@@ -103,7 +103,7 @@ export default function MissionDetail() {
               )}
               {mission.completed && (
                 <span className="badge bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-                  Completed ✅
+                  Passed ✅
                 </span>
               )}
             </div>
@@ -174,21 +174,19 @@ export default function MissionDetail() {
           {/* Start button */}
           <button
             onClick={handleStart}
-            disabled={starting || mission.locked || mission.completed}
+            disabled={starting || mission.locked}
             className={`btn w-full py-4 text-lg ${
               mission.locked
                 ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                : mission.completed
-                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 cursor-not-allowed'
-                  : 'btn-primary'
+                : 'btn-primary'
             }`}
           >
             {mission.locked
               ? '🔒 Locked'
-              : mission.completed
-                ? '✅ Completed'
-                : starting
-                  ? 'Starting...'
+              : starting
+                ? 'Starting...'
+                : mission.completed
+                  ? '🎙️ Practice Again'
                   : '🎙️ Start Conversation'}
           </button>
         </div>
