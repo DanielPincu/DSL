@@ -147,7 +147,12 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
     });
 
     // Save mistakes
-    const mistakes = (aiFeedback.detectedMistakes || aiFeedback.corrections || []).filter(
+    // Check length > 0 because [] is truthy in JS!
+    const mistakesSource =
+      aiFeedback.detectedMistakes && aiFeedback.detectedMistakes.length > 0
+        ? aiFeedback.detectedMistakes
+        : aiFeedback.corrections || [];
+    const mistakes = mistakesSource.filter(
       (c) => c.original && c.original.trim().length > 0
     );
 

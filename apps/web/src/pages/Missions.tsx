@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
-import type { Mission, CEFRLevel } from '@dls/shared';
+import type { Mission, CEFRLevel, Conversation } from '@dls/shared';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
 import { getActiveLevel } from '@dls/shared';
@@ -29,13 +29,27 @@ const LEVEL_COLORS: Record<CEFRLevel, string> = {
 export default function Missions() {
   const { user } = useAuth();
   const [missions, setMissions] = useState<Mission[]>([]);
+  const [activeConvs, setActiveConvs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<CEFRLevel | 'all'>('all');
 
   useEffect(() => {
-    api.get<Mission[]>('/missions')
-      .then(setMissions)
-      .catch(console.error)
+    Promise.all([
+      api.get<Mission[]>('/missions'),
+      api.get<Conversation[]>('/conversations/me'),
+    ]).then(([missionsData, convsData]) => {
+      setMissions(missionsData);
+
+      // Build a map of missionId -> conversationId for active conversations
+      const activeMap: Record<string, string> = {};
+      for (const conv of convsData) {
+        if (conv.status === 'active') {
+          const mId = typeof conv.missionId === 'string' ? conv.missionId : (conv.missionId as { id?: string })?.id || '';
+          if (mId) activeMap[mId] = conv.id;
+        }
+      }
+      setActiveConvs(activeMap);
+    }).catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
@@ -89,17 +103,26 @@ export default function Missions() {
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((mission) => (
+          {filtered.map((mission) => {
+            const activeConvId = activeConvs[mission.id];
+            return (
             <Link
               key={mission.slug}
-              to={`/missions/${mission.slug}`}
+              to={activeConvId ? `/missions/${mission.slug}/conversation/${activeConvId}` : `/missions/${mission.slug}`}
               className="card-hover group"
             >
               <div className="flex items-start justify-between mb-3">
                 <span className="text-3xl">{CATEGORY_ICONS[mission.category] || '🎯'}</span>
-                <span className={`badge text-xs ${LEVEL_COLORS[mission.level]}`}>
-                  {mission.level}
-                </span>
+                <div className="flex gap-1.5">
+                  {activeConvId && (
+                    <span className="badge bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs">
+                      Continue 💬
+                    </span>
+                  )}
+                  <span className={`badge text-xs ${LEVEL_COLORS[mission.level]}`}>
+                    {mission.level}
+                  </span>
+                </div>
               </div>
 
               <h3 className="font-bold text-gray-900 dark:text-white group-hover:text-danish-red transition-colors">
@@ -117,10 +140,11 @@ export default function Missions() {
               </div>
 
               <div className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-danish-red opacity-0 group-hover:opacity-100 transition-opacity">
-                Start mission →
+                {activeConvId ? 'Continue →' : 'Start mission →'}
               </div>
             </Link>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

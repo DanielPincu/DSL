@@ -118,6 +118,15 @@ export default function MissionConversation() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        {/* End conversation hint */}
+        {!complete && messages.length > 0 && (
+          <div className="text-center">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400">
+              💡 Say <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-gray-700 font-mono text-[11px] border border-gray-300 dark:border-gray-600">farvel</kbd> or <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-gray-700 font-mono text-[11px] border border-gray-300 dark:border-gray-600">hej hej</kbd> to end
+            </span>
+          </div>
+        )}
+
         {messages.map((msg, i) => (
           <div
             key={i}

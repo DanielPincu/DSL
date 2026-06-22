@@ -41,18 +41,39 @@ export async function getDashboard(req: AuthRequest, res: Response): Promise<voi
 
     // Suggested mission - find missions at user's level they haven't completed
     let suggestedMission: MissionType | null = null;
+    let suggestedMissionConversationId: string | undefined = undefined;
     if (activeLevel) {
       const completedMissionIds = (
         await Conversation.distinct('missionId', { userId, status: 'completed' })
       ).map((id) => id.toString());
 
+      // Also exclude missions with active conversations — those show as "Continue"
+      const activeMissionIds = (
+        await Conversation.distinct('missionId', { userId, status: 'active' })
+      ).map((id) => id.toString());
+
       const missionDoc = await Mission.findOne({
         level: activeLevel,
-        _id: { $nin: completedMissionIds },
+        _id: { $nin: [...completedMissionIds, ...activeMissionIds] },
       }).sort({ createdAt: 1 });
 
       if (missionDoc) {
         suggestedMission = missionDoc.toJSON() as unknown as MissionType;
+      }
+
+      // If there's an active conversation for a mission at this level, link to that instead
+      if (activeMissionIds.length > 0) {
+        const activeConv = await Conversation.findOne({
+          userId,
+          missionId: { $in: activeMissionIds },
+          status: 'active',
+        }).populate('missionId').sort({ updatedAt: -1 });
+
+        if (activeConv && activeConv.missionId) {
+          const popMission = activeConv.missionId as unknown as { toJSON: () => MissionType };
+          suggestedMission = popMission.toJSON() as MissionType;
+          suggestedMissionConversationId = activeConv._id.toString();
+        }
       }
     }
 
@@ -102,6 +123,7 @@ export async function getDashboard(req: AuthRequest, res: Response): Promise<voi
       savedMistakes,
       weakestCategories,
       suggestedMission,
+      suggestedMissionConversationId,
       currentStreak,
       recentActivity,
     };

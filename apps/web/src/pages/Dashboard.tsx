@@ -133,21 +133,32 @@ export default function Dashboard() {
           {data.suggestedMission && (
             <div className="card bg-gradient-to-br from-danish-red/5 to-danish-accent/10 dark:from-danish-red/10 dark:to-danish-accent/5 border-danish-red/20">
               <div className="flex items-start gap-4">
-                <span className="text-3xl">🎯</span>
+                <span className="text-3xl">{data.suggestedMissionConversationId ? '💬' : '🎯'}</span>
                 <div className="flex-1">
-                  <p className="text-xs font-medium text-danish-red uppercase tracking-wide">Suggested Mission</p>
+                  <p className="text-xs font-medium text-danish-red uppercase tracking-wide">
+                    {data.suggestedMissionConversationId ? 'Continue Conversation' : 'Suggested Mission'}
+                  </p>
                   <h3 className="font-bold text-lg text-gray-900 dark:text-white mt-1">
                     {data.suggestedMission.title}
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     {data.suggestedMission.description}
                   </p>
-                  <Link
-                    to={`/missions/${data.suggestedMission.slug}`}
-                    className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-danish-red hover:text-red-700"
-                  >
-                    Start mission →
-                  </Link>
+                  {data.suggestedMissionConversationId ? (
+                    <Link
+                      to={`/missions/${data.suggestedMission.slug}/conversation/${data.suggestedMissionConversationId}`}
+                      className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-danish-red hover:text-red-700"
+                    >
+                      Continue →
+                    </Link>
+                  ) : (
+                    <Link
+                      to={`/missions/${data.suggestedMission.slug}`}
+                      className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-danish-red hover:text-red-700"
+                    >
+                      Start mission →
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>

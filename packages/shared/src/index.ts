@@ -166,6 +166,7 @@ export interface DashboardData {
   savedMistakes: number;
   weakestCategories: { category: string; count: number }[];
   suggestedMission: Mission | null;
+  suggestedMissionConversationId?: string;
   currentStreak: number;
   recentActivity: {
     type: 'conversation' | 'mistake' | 'mission_complete';

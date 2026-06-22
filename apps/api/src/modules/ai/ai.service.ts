@@ -190,26 +190,27 @@ ${conversationHistory.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('
 The user just said: "${userInput}"
 
 Respond in character in Danish, at the user's level. Correct mistakes gently.
-Then provide your analysis as valid JSON with this structure:
+Then provide your analysis as valid JSON with this exact structure:
 {
   "npcReply": "Your Danish response to the user",
   "corrections": [
     {
-      "original": "what the user said wrong (if anything)",
+      "original": "what the user said wrong",
       "corrected": "the correct version",
       "explanation": "brief explanation in English",
       "type": "grammar|vocabulary|word_order|spelling|phrase"
     }
   ],
   "feedback": "Brief encouraging feedback in English",
-  "score": 0-100,
-  "detectedMistakes": []
+  "score": 0-100
 }
 
-Important:
+Important RULES:
 - npcReply must ALWAYS be a string in Danish
-- corrections should be empty array if no mistakes
-- score should reflect overall quality
+- If the user made ANY mistake, ALWAYS include it in the corrections array
+- corrections MUST be a non-empty array when the user makes errors
+- corrections should be [] (empty array) ONLY if the user wrote perfect Danish
+- score 0-100: reflect overall quality of the user's Danish
 - If the user says "farvel" or goodbye, indicate conversation should end
 - Respond in valid JSON format only, no markdown`;
 }
