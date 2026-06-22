@@ -22,7 +22,8 @@ function setTokenCookie(res: Response, token: string): void {
 
 export async function register(req: AuthRequest, res: Response): Promise<void> {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, language } = req.body;
+    const lang = (['da', 'es'].includes(language) ? language : 'da') as 'da' | 'es';
 
     const existing = await User.findOne({ email });
     if (existing) {
@@ -35,7 +36,7 @@ export async function register(req: AuthRequest, res: Response): Promise<void> {
       email,
       passwordHash,
       name,
-      activeLanguage: 'da',
+      activeLanguage: lang,
       progress: {
         da: { selectedLevel: 'A1', strengths: [], weaknesses: [] },
         es: { selectedLevel: 'A1', strengths: [], weaknesses: [] },
