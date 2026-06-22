@@ -186,7 +186,7 @@ export default function MissionConversation() {
         ))}
 
         {/* Corrections display */}
-        {showCorrections.length > 0 && (
+        {(showCorrections || []).length > 0 && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl p-4">
             <p className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
               📝 Corrections
@@ -211,7 +211,7 @@ export default function MissionConversation() {
         )}
 
         {/* Feedback */}
-        {lastFeedback && showCorrections.length > 0 && (
+        {lastFeedback && (showCorrections || []).length > 0 && (
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">{lastFeedback}</p>
             <div className="mt-2 flex items-center gap-2">
