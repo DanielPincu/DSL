@@ -1553,7 +1553,12 @@ async function seed(): Promise<void> {
     await Mission.deleteMany({});
     console.log('Cleared existing missions');
 
-    await Mission.insertMany(missions as any[]);
+    const BATCH_SIZE = 50;
+    for (let i = 0; i < missions.length; i += BATCH_SIZE) {
+      const batch = missions.slice(i, i + BATCH_SIZE);
+      await Mission.insertMany(batch);
+      console.log(`  Inserted ${Math.min(i + BATCH_SIZE, missions.length)}/${missions.length} missions`);
+    }
     console.log(`\nSeeded ${missions.length} missions:\n`);
 
     const levels = ['A1', 'A2', 'B1', 'B2', 'C1'] as const;
