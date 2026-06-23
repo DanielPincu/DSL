@@ -7,22 +7,49 @@ export default function Profile() {
   const { user, refreshUser } = useAuth();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error'>('success');
+  const [showReset, setShowReset] = useState(false);
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetting, setResetting] = useState(false);
 
   if (!user) return null;
 
   const activeLevel = getActiveLevel(user, user.activeLanguage);
 
+  function showMsg(text: string, type: 'success' | 'error' = 'success') {
+    setMessage(text);
+    setMessageType(type);
+  }
+
   async function handleOverrideLevel(level: CEFRLevel) {
     setSaving(true);
-    setMessage('');
+    showMsg('');
     try {
       await api.patch('/auth/level', { level });
       await refreshUser();
-      setMessage(`Level set to ${level}`);
+      showMsg(`Level set to ${level}`);
     } catch {
-      setMessage('Failed to update level');
+      showMsg('Failed to update level', 'error');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleReset() {
+    if (!resetPassword) return;
+    setResetting(true);
+    showMsg('');
+    try {
+      await api.post('/auth/reset', { password: resetPassword });
+      await refreshUser();
+      setShowReset(false);
+      setResetPassword('');
+      showMsg('Profile has been reset to A1! All progress cleared.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to reset profile';
+      showMsg(msg, 'error');
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -86,8 +113,60 @@ export default function Profile() {
         </p>
       </div>
 
+      {/* Reset Profile */}
+      <div className="card border-2 border-red-200 dark:border-red-900/50">
+        <h2 className="font-semibold text-red-600 dark:text-red-400 mb-2">⚠️ Danger Zone</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Reset your profile to A1 and delete all conversations, attempts, and mistakes.
+          This cannot be undone.
+        </p>
+
+        {!showReset ? (
+          <button
+            onClick={() => setShowReset(true)}
+            className="btn bg-red-600 text-white hover:bg-red-700"
+          >
+            Reset Profile
+          </button>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-red-600 dark:text-red-400">
+              Enter your password to confirm reset:
+            </p>
+            <input
+              type="password"
+              value={resetPassword}
+              onChange={(e) => setResetPassword(e.target.value)}
+              placeholder="Your password"
+              className="input"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleReset}
+                disabled={!resetPassword || resetting}
+                className="btn bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {resetting ? 'Resetting...' : 'Confirm Reset'}
+              </button>
+              <button
+                onClick={() => { setShowReset(false); setResetPassword(''); }}
+                disabled={resetting}
+                className="btn bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {message && (
-        <div className="bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 p-3 rounded-xl text-sm">
+        <div className={`p-3 rounded-xl text-sm ${
+          messageType === 'success'
+            ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+            : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+        }`}>
           {message}
         </div>
       )}

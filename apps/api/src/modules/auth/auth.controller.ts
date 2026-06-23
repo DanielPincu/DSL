@@ -2,6 +2,9 @@ import { Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../users/user.model.js';
+import Conversation from '../conversations/conversation.model.js';
+import Attempt from '../attempts/attempt.model.js';
+import Mistake from '../mistakes/mistake.model.js';
 import { env } from '../../config/env.js';
 import type { AuthRequest } from '../../middleware/auth.js';
 
@@ -144,5 +147,46 @@ export async function getMe(req: AuthRequest, res: Response): Promise<void> {
   } catch (error) {
     console.error('Get me error:', error);
     res.status(500).json({ success: false, error: 'Failed to get user' });
+  }
+}
+
+export async function resetProfile(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      res.status(400).json({ success: false, error: 'Password is required' });
+      return;
+    }
+
+    const user = await User.findById(req.userId).select('+passwordHash');
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    const isValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isValid) {
+      res.status(403).json({ success: false, error: 'Incorrect password' });
+      return;
+    }
+
+    // Delete all user data
+    await Promise.all([
+      Conversation.deleteMany({ userId: user._id }),
+      Attempt.deleteMany({ userId: user._id }),
+      Mistake.deleteMany({ userId: user._id }),
+    ]);
+
+    // Reset user progress to fresh A1
+    user.progress = {
+      da: { selectedLevel: 'A1', strengths: [], weaknesses: [] },
+    };
+    user.activeLanguage = 'da';
+    await user.save();
+
+    res.json({ success: true, data: user.toJSON() });
+  } catch (error) {
+    console.error('Reset profile error:', error);
+    res.status(500).json({ success: false, error: 'Failed to reset profile' });
   }
 }
