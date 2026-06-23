@@ -26,6 +26,7 @@ export default function MissionDetail() {
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
+  const [reviewed, setReviewed] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (!slug) return;
@@ -58,6 +59,18 @@ export default function MissionDetail() {
       setStarting(false);
     }
   }
+
+  function toggleCard(i: number) {
+    setReviewed((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i);
+      else next.add(i);
+      return next;
+    });
+  }
+
+  const vocab = mission?.vocabulary || [];
+  const allReviewed = vocab.length > 0 && reviewed.size >= vocab.length;
 
   if (loading) return <LoadingSpinner text="Loading mission..." />;
 
@@ -137,8 +150,50 @@ export default function MissionDetail() {
             </p>
           </div>
 
-          {/* Required Phrases */}
-          {mission.requiredPhrases.length > 0 && (
+          {/* Vocabulary Learning Cards */}
+          {vocab.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="font-semibold text-gray-900 dark:text-white">📚 Learn Vocabulary</h2>
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {reviewed.size}/{vocab.length} reviewed
+                </span>
+              </div>
+              <div className="space-y-2">
+                {vocab.map((v, i) => {
+                  const isFlipped = reviewed.has(i);
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => toggleCard(i)}
+                      className={`w-full text-left rounded-xl px-4 py-3 transition-all duration-200 ${
+                        isFlipped
+                          ? 'bg-green-50 dark:bg-green-900/20 border-2 border-green-300 dark:border-green-700'
+                          : 'bg-gray-50 dark:bg-gray-800/50 border-2 border-transparent hover:border-danish-red/30 dark:hover:border-danish-red/50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className={`font-medium ${isFlipped ? 'text-green-800 dark:text-green-200' : 'text-gray-700 dark:text-gray-300'}`}>
+                          {isFlipped ? v.english : v.danish}
+                        </span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500 ml-2 shrink-0">
+                          {isFlipped ? '👆 tap to hide' : '👆 tap for English'}
+                        </span>
+                      </div>
+                      {isFlipped && (
+                        <p className="text-xs text-green-600 dark:text-green-400 mt-1 italic">
+                          🇩🇰 {v.danish}
+                        </p>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Original Required Phrases as compact reference */}
+          {mission.requiredPhrases.length > 0 && vocab.length === 0 && (
             <div>
               <h2 className="font-semibold text-gray-900 dark:text-white mb-2">💡 Useful Phrases</h2>
               <div className="space-y-2">
@@ -172,13 +227,29 @@ export default function MissionDetail() {
           )}
 
           {/* Start button */}
+          {!mission.locked && vocab.length > 0 && !allReviewed && (
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 text-center">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                Review all vocabulary cards above to unlock the conversation
+              </p>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                <div
+                  className="bg-danish-red h-2.5 rounded-full transition-all duration-300"
+                  style={{ width: `${(reviewed.size / vocab.length) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+
           <button
             onClick={handleStart}
-            disabled={starting || mission.locked}
+            disabled={starting || mission.locked || (vocab.length > 0 && !allReviewed)}
             className={`btn w-full py-4 text-lg ${
               mission.locked
                 ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
-                : 'btn-primary'
+                : vocab.length > 0 && !allReviewed
+                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                  : 'btn-primary'
             }`}
           >
             {mission.locked
@@ -187,7 +258,9 @@ export default function MissionDetail() {
                 ? 'Starting...'
                 : mission.completed
                   ? '🎙️ Practice Again'
-                  : '🎙️ Start Conversation'}
+                  : vocab.length > 0 && !allReviewed
+                    ? `📚 Review ${reviewed.size}/${vocab.length} to start`
+                    : '🎙️ Start Conversation'}
           </button>
         </div>
       </div>

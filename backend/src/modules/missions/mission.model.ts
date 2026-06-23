@@ -13,6 +13,7 @@ export interface IMission extends Document {
   npcName: string;
   npcRole: string;
   requiredPhrases: string[];
+  vocabulary: { danish: string; english: string }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,6 +36,7 @@ const missionSchema = new Schema<IMission>(
     npcRole: { type: String, required: true },
     order: { type: Number, required: true, default: 0 },
     requiredPhrases: [{ type: String }],
+    vocabulary: [{ danish: { type: String, required: true }, english: { type: String, required: true } }],
   },
   {
     timestamps: true,

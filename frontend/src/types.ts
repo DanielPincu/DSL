@@ -65,6 +65,11 @@ export function getLanguageProgress(user: Pick<User, 'progress'> | null, languag
 }
 
 // Mission
+export interface MissionVocab {
+  danish: string;
+  english: string;
+}
+
 export interface Mission {
   id: string;
   title: string;
@@ -78,6 +83,7 @@ export interface Mission {
   npcName: string;
   npcRole: string;
   requiredPhrases: string[];
+  vocabulary: MissionVocab[];
   createdAt: string;
   updatedAt: string;
 }
