@@ -231,7 +231,7 @@ export default function Vocabulary() {
       {/* Tabs */}
       <div className="flex border-b border-gray-200 dark:border-gray-700">
         {(['browse', 'flashcards', 'quiz'] as Tab[]).map((t) => (
-          <button key={t} onClick={() => { setTab(t); if (t === 'flashcards' && deck.length === 0) startFlashcards(); }}
+          <button key={t} onClick={() => { setTab(t); }}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors capitalize ${
               tab === t ? 'border-danish-red text-danish-red' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700'
             }`}
