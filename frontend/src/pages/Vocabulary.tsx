@@ -420,21 +420,38 @@ export default function Vocabulary() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto w-full">
                   {options.map((opt, i) => {
                     const isCorrectAnswer = opt === currentCorrect;
-                    const isUserWrongPick = !isCorrectAnswer && opt === quizResults[quizResults.length-1]?.yourAnswer;
-                    let cls = 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700';
-                    if (quizResult && isCorrectAnswer) cls = 'bg-green-100 dark:bg-green-900/30 border-green-400 dark:border-green-600';
-                    else if (quizResult === 'wrong' && isUserWrongPick) cls = 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700';
-                    else if (quizResult === 'wrong') cls = 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 opacity-40';
+                    const isUserPick = opt === (quizResults[quizResults.length-1]?.yourAnswer ?? '');
+                    let cls = 'bg-gray-50 dark:bg-gray-800/50 border-2 border-gray-200 dark:border-gray-700';
+                    if (!quizResult) cls += ' hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer';
+                    if (quizResult && isCorrectAnswer) cls = 'bg-green-50 dark:bg-green-900/20 border-2 border-green-500 dark:border-green-400 text-green-800 dark:text-green-200 font-bold';
+                    if (quizResult && isUserPick && !isCorrectAnswer) cls = 'bg-red-50 dark:bg-red-900/20 border-2 border-red-500 dark:border-red-400 text-red-700 dark:text-red-300';
+                    if (quizResult && !isCorrectAnswer && !isUserPick) cls = 'bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-600';
                     return (
-                      <button key={i} onClick={() => !quizResult && answerQuiz(opt)} disabled={!!quizResult}
-                        className={`btn text-sm py-3 ${cls}`}>{opt}</button>
+                      <div key={i} onClick={() => !quizResult && answerQuiz(opt)}
+                        className={`btn text-sm py-3 flex items-center justify-center ${cls}`}>
+                        {opt}
+                        {quizResult && isCorrectAnswer && ' ✅'}
+                        {quizResult && isUserPick && !isCorrectAnswer && ' ❌'}
+                      </div>
                     );
                   })}
                 </div>
 
-                {/* Next button */}
+                {/* Feedback and Next button */}
                 {quizResult && (
-                  <div className="mt-6">
+                  <div className="mt-6 space-y-3">
+                    {(() => {
+                      const last = quizResults[quizResults.length-1];
+                      if (!last) return null;
+                      return (
+                        <div className={`text-sm ${last.isCorrect ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {last.isCorrect
+                            ? `✅ Correct! "${last.correctAnswer}"`
+                            : `❌ You answered "${last.yourAnswer}" — correct answer is "${last.correctAnswer}"`
+                          }
+                        </div>
+                      );
+                    })()}
                     <button onClick={nextQuestion} className="btn-primary px-8 text-lg">
                       {quizIndex < 19 ? 'Next →' : 'See Results'}
                     </button>
