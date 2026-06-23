@@ -392,18 +392,18 @@ export default function Vocabulary() {
               </div>
             </div>
           ) : quizWords.length === 0 ? (
-            <div className="text-center py-8 space-y-4">
+            <div className="text-center py-12 space-y-4">
               <span className="text-5xl block">✏️</span>
-              <p className="text-gray-500 dark:text-gray-400 mb-2">Choose a level and test your knowledge:</p>
-              <div className="flex justify-center gap-2 mb-4">
-                {CEFR_LEVELS.map((l) => (
-                  <button key={l} onClick={() => { setQuizLevel(l); startQuiz(); }}
-                    className={`btn text-sm ${quizLevel === l ? 'bg-danish-red text-white' : 'bg-gray-100 dark:bg-gray-700'}`}>
-                    {l} {passedLevels.includes(l) ? '✅' : ''}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-gray-400">20 questions per quiz · 50% to pass and unlock missions</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                Test your {userLevel} vocabulary knowledge
+              </p>
+              <p className="text-xs text-gray-400">20 questions · 50% to pass and unlock missions</p>
+              <button onClick={() => { setQuizLevel(userLevel); startQuiz(); }} className="btn-primary px-8 py-3 text-lg">
+                Start {userLevel} Quiz
+              </button>
+              {passedLevels.includes(userLevel) && (
+                <p className="text-green-600 dark:text-green-400 text-sm font-medium">✅ {userLevel} already passed</p>
+              )}
             </div>
           ) : (
             <>
