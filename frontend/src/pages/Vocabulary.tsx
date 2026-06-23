@@ -131,13 +131,18 @@ export default function Vocabulary() {
       setCardIndex((i) => i + 1);
       setFlipped(false);
     } else {
-      const remaining = deck.filter((w) => !w.learned);
-      if (remaining.length > deck.length * 0.5 || remaining.length > 3) {
+      // Check actual learned status from the words state (toggleLearned updates it)
+      const deckIds = new Set(deck.map((w) => w.id));
+      const remaining = words.filter((w) => deckIds.has(w.id) && !w.learned);
+      if (remaining.length > 3) {
         setDeck(remaining.sort(() => Math.random() - 0.5));
         setCardIndex(0);
         setFlipped(false);
         showMsg(`Round done! ${remaining.length} words left to practice`);
       } else {
+        // Mark the last few as learned
+        remaining.forEach((w) => { if (!w.learned) toggleLearned(w.id, true); });
+        setDeck([]);
         setTab('browse');
         showMsg('All words learned! 🎉');
       }
