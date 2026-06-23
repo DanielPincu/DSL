@@ -40,7 +40,7 @@ function jsonRateLimiter(opts: { windowMs: number; max: number }) {
   });
 }
 app.use('/api/auth', jsonRateLimiter({ windowMs: 60 * 1000, max: 40 }));
-app.use('/api', jsonRateLimiter({ windowMs: 60 * 1000, max: 80 }));
+app.use('/api', jsonRateLimiter({ windowMs: 60 * 1000, max: 200 }));
 
 // Body parsing
 app.use(express.json({ limit: '10kb' }));
