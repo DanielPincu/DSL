@@ -116,7 +116,7 @@ export default function Vocabulary() {
   function startFlashcards(level?: CEFRLevel) {
     const lvl = level || userLevel;
     setDeckLevel(lvl);
-    const pool = words.filter((w) => w.level === lvl).sort(() => Math.random() - 0.5);
+    const pool = words.filter((w) => w.level === lvl && !w.learned).sort(() => Math.random() - 0.5);
     if (pool.length === 0) { showMsg('No words for this level'); return; }
     setDeck(pool);
     setCardIndex(0);
@@ -305,12 +305,21 @@ export default function Vocabulary() {
           {deck.length === 0 ? (
             <div className="text-center py-12 space-y-4">
               <span className="text-6xl block">🃏</span>
-              <p className="text-gray-500 dark:text-gray-400">
-                Practice {userLevel} vocabulary with flashcards
-              </p>
-              <button onClick={() => startFlashcards()} className="btn-primary px-8 py-3 text-lg">
-                Play {userLevel} Flash
-              </button>
+              {words.filter((w) => w.level === userLevel && !w.learned).length === 0 ? (
+                <>
+                  <p className="text-green-600 dark:text-green-400 font-semibold text-lg">All {userLevel} words learned! 🎉</p>
+                  <button onClick={() => window.location.reload()} className="btn-primary">Refresh</button>
+                </>
+              ) : (
+                <>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    {words.filter((w) => w.level === userLevel && !w.learned).length} words to practice for {userLevel}
+                  </p>
+                  <button onClick={() => startFlashcards()} className="btn-primary px-8 py-3 text-lg">
+                    Play {userLevel} Flash
+                  </button>
+                </>
+              )}
             </div>
           ) : (
             <>
