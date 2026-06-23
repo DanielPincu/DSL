@@ -85,7 +85,7 @@ export default function App() {
         }
       />
       <Route
-        path="/vocabulary"
+        path="/learn"
         element={
           <ProtectedRoute>
             <Layout>

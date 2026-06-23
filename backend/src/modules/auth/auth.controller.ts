@@ -182,6 +182,8 @@ export async function resetProfile(req: AuthRequest, res: Response): Promise<voi
       da: { selectedLevel: 'A1', strengths: [], weaknesses: [] },
     };
     user.activeLanguage = 'da';
+    user.learnedVocab = [];
+    user.passedLevelQuizzes = [];
     await user.save();
 
     res.json({ success: true, data: user.toJSON() });

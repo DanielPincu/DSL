@@ -280,9 +280,12 @@ export default function Vocabulary() {
                   </div>
                 </div>
                 <button onClick={() => toggleLearned(w.id, !w.learned)}
-                  className={`ml-3 text-lg shrink-0 ${w.learned ? 'opacity-100' : 'opacity-30 hover:opacity-60'}`}
+                  className={`ml-3 shrink-0 flex items-center gap-1.5 text-xs ${
+                    w.learned ? 'text-green-600 dark:text-green-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                  }`}
                   title={w.learned ? 'Mark unlearned' : 'Mark learned'}>
                   {w.learned ? '✅' : '⬜'}
+                  <span className="hidden sm:inline">{w.learned ? 'Learned' : 'Mark learned'}</span>
                 </button>
               </div>
             ))}

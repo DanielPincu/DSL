@@ -119,7 +119,7 @@ export default function Missions() {
           <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto">
             Complete the level quiz with at least 50% correct to unlock {activeLevel} missions.
           </p>
-          <Link to="/vocabulary" className="btn-primary">
+          <Link to="/learn" className="btn-primary">
             Take {activeLevel} Quiz
           </Link>
         </div>
