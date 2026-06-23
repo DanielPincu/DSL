@@ -205,6 +205,46 @@ export default function Dashboard() {
           Browse Missions
         </Link>
       </div>
+
+      {/* Pipeline test */}
+      <div className="text-center pb-4">
+        <TestButton />
+      </div>
+    </div>
+  );
+}
+
+function TestButton() {
+  const [result, setResult] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleTest() {
+    setLoading(true);
+    setResult(null);
+    try {
+      const data = await api.get<{ message: string }>('/test');
+      setResult(data.message);
+    } catch {
+      setResult('Error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div>
+      <button
+        onClick={handleTest}
+        disabled={loading}
+        className="btn bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 text-sm"
+      >
+        {loading ? 'Testing...' : 'Test Pipeline'}
+      </button>
+      {result && (
+        <span className="ml-3 text-sm font-semibold text-green-600 dark:text-green-400">
+          {result}
+        </span>
+      )}
     </div>
   );
 }
