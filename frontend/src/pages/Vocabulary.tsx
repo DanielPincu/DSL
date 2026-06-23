@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -34,6 +34,7 @@ export default function Vocabulary() {
   const [showLearned, setShowLearned] = useState(true);
   const [message, setMessage] = useState('');
   const [passedLevels, setPassedLevels] = useState<string[]>([]);
+  const [visibleCount, setVisibleCount] = useState(50);
 
   // Flashcards
   const [deckLevel, setDeckLevel] = useState('A1');
@@ -66,6 +67,24 @@ export default function Vocabulary() {
       .catch(() => setMessage('Failed to load vocabulary'))
       .finally(() => setLoading(false));
   }, []);
+
+  // Lazy loading observer
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastWordRef = useCallback((node: HTMLDivElement | null) => {
+    if (observer.current) observer.current.disconnect();
+    if (!node) return;
+    observer.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        setVisibleCount((prev) => prev + 50);
+      }
+    }, { rootMargin: '200px' });
+    observer.current.observe(node);
+  }, []);
+
+  // Reset visible count when filters change
+  useEffect(() => {
+    setVisibleCount(50);
+  }, [levelFilter, catFilter, showLearned]);
 
   function showMsg(msg: string) { setMessage(msg); setTimeout(() => setMessage(''), 4000); }
 
@@ -234,8 +253,9 @@ export default function Vocabulary() {
           </div>
 
           <div className="space-y-1">
-            {filtered.map((w) => (
-              <div key={w.id} className={`flex items-center justify-between px-4 py-2.5 rounded-lg text-sm ${
+            {filtered.slice(0, visibleCount).map((w, i) => (
+              <div key={w.id} ref={i === visibleCount - 1 && i < filtered.length - 1 ? lastWordRef : null}
+                className={`flex items-center justify-between px-4 py-2.5 rounded-lg text-sm ${
                 w.learned ? 'bg-green-50 dark:bg-green-900/20' : 'bg-white dark:bg-danish-card border border-gray-100 dark:border-gray-800'
               }`}>
                 <div className="flex-1 min-w-0">
@@ -256,6 +276,11 @@ export default function Vocabulary() {
               </div>
             ))}
             {filtered.length === 0 && <p className="text-center text-gray-400 py-8">No words match your filters</p>}
+            {visibleCount < filtered.length && (
+              <div ref={lastWordRef} className="text-center py-4 text-sm text-gray-400">
+                Scrolling for more...
+              </div>
+            )}
           </div>
         </div>
       )}
