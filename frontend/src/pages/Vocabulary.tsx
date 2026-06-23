@@ -2,7 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { CEFR_LEVELS } from '../types';
+import { CEFR_LEVELS, type CEFRLevel } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { getActiveLevel } from '../types';
 
 interface VocabWord {
   id: string;
@@ -26,6 +28,8 @@ type Tab = 'browse' | 'flashcards' | 'quiz';
 
 export default function Vocabulary() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const userLevel = user ? getActiveLevel(user, user.activeLanguage) : 'A1';
   const [tab, setTab] = useState<Tab>('browse');
   const [words, setWords] = useState<VocabWord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +41,7 @@ export default function Vocabulary() {
   const [visibleCount, setVisibleCount] = useState(50);
 
   // Flashcards
-  const [deckLevel, setDeckLevel] = useState('A1');
+  const [deckLevel, setDeckLevel] = useState<typeof userLevel>(userLevel);
   const [deck, setDeck] = useState<VocabWord[]>([]);
   const [cardIndex, setCardIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -50,7 +54,7 @@ export default function Vocabulary() {
   const [quizCorrect, setQuizCorrect] = useState(0);
   const [quizDone, setQuizDone] = useState(false);
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
-  const [quizLevel, setQuizLevel] = useState('A1');
+  const [quizLevel, setQuizLevel] = useState<typeof userLevel>(userLevel);
   const [submitting, setSubmitting] = useState(false);
   const [quizPassed, setQuizPassed] = useState<boolean | null>(null);
   const [quizScore, setQuizScore] = useState(0);
@@ -109,7 +113,7 @@ export default function Vocabulary() {
   const learnedCount = words.filter((w) => w.learned).length;
 
   // ── Flashcards ──
-  function startFlashcards(level: string) {
+  function startFlashcards(level: CEFRLevel) {
     setDeckLevel(level);
     const pool = words.filter((w) => w.level === level).sort(() => Math.random() - 0.5);
     if (pool.length === 0) { showMsg('No words for this level'); return; }
@@ -290,15 +294,20 @@ export default function Vocabulary() {
         <div className="space-y-6">
           {deck.length === 0 ? (
             <div className="text-center py-8 space-y-4">
-              <p className="text-gray-500 dark:text-gray-400">Pick a level to start practicing:</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                Your current level is <strong>{userLevel}</strong>. Pick a level to practice:
+              </p>
               <div className="flex justify-center gap-2">
                 {CEFR_LEVELS.map((l) => (
                   <button key={l} onClick={() => startFlashcards(l)}
-                    className={`btn text-sm ${deckLevel === l ? 'bg-danish-red text-white' : 'bg-gray-100 dark:bg-gray-700'}`}>
+                    className={`btn text-sm ${l === userLevel ? 'bg-danish-red text-white ring-2 ring-danish-red/30' : deckLevel === l ? 'bg-danish-red text-white' : 'bg-gray-100 dark:bg-gray-700'}`}>
                     {l} ({words.filter((w) => w.level === l).length})
                   </button>
                 ))}
               </div>
+              <button onClick={() => startFlashcards(userLevel)} className="btn-primary mt-2">
+                Start {userLevel} Flashcards
+              </button>
             </div>
           ) : (
             <>
