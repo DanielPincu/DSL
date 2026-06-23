@@ -29,7 +29,7 @@ const attemptSchema = new Schema<IAttempt>(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     missionId: { type: Schema.Types.ObjectId, ref: 'Mission', required: true },
     conversationId: { type: Schema.Types.ObjectId, ref: 'Conversation', required: true },
-    language: { type: String, enum: ['da', 'es'], required: true, default: 'da' },
+    language: { type: String, enum: ['da'], required: true, default: 'da' },
     userInput: { type: String, required: true },
     aiReply: { type: String, required: true },
     corrections: [correctionSchema],

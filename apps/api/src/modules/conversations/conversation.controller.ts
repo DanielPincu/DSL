@@ -62,7 +62,7 @@ export async function startConversation(req: AuthRequest, res: Response): Promis
 
     const conversation = await Conversation.create({
       userId, missionId, language: lang,
-      messages: [{ role: 'system' as const, content: `You are ${mission.npcName}, a ${mission.npcRole}. Scenario: ${mission.scenarioPrompt}. User level: ${activeLevel}. Language: ${lang === 'es' ? 'Spanish' : 'Danish'}.`, createdAt: new Date().toISOString() }],
+      messages: [{ role: 'system' as const, content: `You are ${mission.npcName}, a ${mission.npcRole}. Scenario: ${mission.scenarioPrompt}. User level: ${activeLevel}. Language: Danish.`, createdAt: new Date().toISOString() }],
       status: 'active',
     });
     res.status(201).json({ success: true, data: conversation.toJSON() });
@@ -102,7 +102,7 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
     } catch (err) {
       console.warn('AI provider failed, using fallback:', err instanceof Error ? err.message : 'unknown error');
       aiFeedback = {
-        npcReply: lang === 'es' ? '¡Hola! Cuéntame más.' : 'Hej! Det lyder godt. Fortæl mig mere.',
+        npcReply: 'Hej! Det lyder godt. Fortæl mig mere.',
         corrections: [], feedback: '', score: 50, detectedMistakes: [], passed: true, passedReason: '',
       };
     }
@@ -129,13 +129,13 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
     }
 
     let autoPromoted: CEFRLevel | null = null;
-    const isGoodbye = userMessage.toLowerCase().includes('farvel') || userMessage.toLowerCase().includes('adiós') || userMessage.toLowerCase().includes('adios') ||
-      aiFeedback.npcReply.toLowerCase().includes('farvel') || aiFeedback.npcReply.toLowerCase().includes('adiós') || aiFeedback.npcReply.toLowerCase().includes('adios');
+    const isGoodbye = userMessage.toLowerCase().includes('farvel') ||
+      aiFeedback.npcReply.toLowerCase().includes('farvel');
 
     const allUserMsgs = conversation.messages.filter((m) => m.role === 'user').map((m) => m.content.toLowerCase().trim());
     const meaningfulCount = allUserMsgs.filter((m) => {
       const wc = m.split(/\s+/).length;
-      return !['hej', 'hola', 'hej!', 'hola!', 'ja', 'sí', 'si', 'nej', 'no', 'ok'].includes(m) && wc > 1;
+      return !['hej', 'hej!', 'ja', 'nej', 'no', 'ok'].includes(m) && wc > 1;
     }).length;
 
     if (isGoodbye && meaningfulCount >= 5) {
@@ -151,7 +151,7 @@ export async function sendMessage(req: AuthRequest, res: Response): Promise<void
       }
     } else if (isGoodbye && meaningfulCount < 5) {
       await Mistake.deleteMany({ conversationId: conversation._id }); await Attempt.deleteMany({ conversationId: conversation._id }); await Conversation.findByIdAndDelete(conversation._id);
-      res.json({ success: true, data: { reset: true, reason: lang === 'es' ? 'Escribiste muy pocos mensajes. Escribe al menos 5 mensajes antes de decir adiós.' : 'Du skrev for få beskeder. Skriv mindst 5 beskeder på dansk før du siger farvel.' } }); return;
+      res.json({ success: true, data: { reset: true, reason: 'Du skrev for få beskeder. Skriv mindst 5 beskeder på dansk før du siger farvel.' } }); return;
     }
 
     res.json({ success: true, data: { conversation: conversation.toJSON(), aiReply: aiFeedback.npcReply, corrections: aiFeedback.corrections || [], feedback: aiFeedback.feedback || '', score: aiFeedback.score || 70, conversationComplete: false, autoPromoted: null, passed: true } });

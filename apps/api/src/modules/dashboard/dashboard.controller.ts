@@ -93,7 +93,7 @@ export async function getDashboard(req: AuthRequest, res: Response): Promise<voi
       currentStreak,
       recentActivity,
       activeLanguage: lang,
-      availableLanguages: ['da', 'es'],
+      availableLanguages: ['da'],
     };
 
     res.json({ success: true, data: dashboard });

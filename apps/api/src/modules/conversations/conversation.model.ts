@@ -25,7 +25,7 @@ const conversationSchema = new Schema<IConversation>(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     missionId: { type: Schema.Types.ObjectId, ref: 'Mission', required: true },
-    language: { type: String, enum: ['da', 'es'], required: true, default: 'da' },
+    language: { type: String, enum: ['da'], required: true, default: 'da' },
     messages: [messageSchema],
     status: { type: String, enum: ['active', 'completed'], default: 'active' },
     finalScore: { type: Number, min: 0, max: 100 },

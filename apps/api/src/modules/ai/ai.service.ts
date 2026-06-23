@@ -179,15 +179,10 @@ export function buildConversationAIPrompt(
   scenarioPrompt: string,
   level: CEFRLevel,
   conversationHistory: Message[],
-  language: string = 'da'
+  _language: string = 'da'
 ): string {
-  const isSpanish = language === 'es';
-  const targetLang = isSpanish ? 'Spanish' : 'Danish';
-  const countryName = isSpanish ? 'Spain' : 'Denmark';
-  const confusedReply = isSpanish
-    ? '"Lo siento, no entiendo inglés. ¿Puedes decirlo en español?"'
-    : '"Undskyld, jeg forstår ikke engelsk. Kan du sige det på dansk?"';
-  return `You are ${npcName}, a ${npcRole} in ${countryName}. You are helping someone practice ${targetLang}.
+  const confusedReply = '"Undskyld, jeg forstår ikke engelsk. Kan du sige det på dansk?"';
+  return `You are ${npcName}, a ${npcRole} in Denmark. You are helping someone practice Danish.
 
 Scenario: ${scenarioPrompt}
 User's approximate level: ${level}
@@ -197,12 +192,12 @@ ${conversationHistory.map((m) => `${m.role.toUpperCase()}: ${m.content}`).join('
 
 The user just said: "${userInput}"
 
-Respond in ${targetLang} ONLY. Never use English in your npcReply.
-The user might write in English. If they do, you MUST act like a real ${countryName === "Spain" ? "Spaniard" : "Dane"} who DOES NOT understand English. Respond with confusion in ${targetLang} ONLY: ${confusedReply} Never guess what the English meant.
+Respond in Danish ONLY. Never use English in your npcReply.
+The user might write in English. If they do, you MUST act like a real Dane who DOES NOT understand English. Respond with confusion in Danish ONLY: ${confusedReply} Never guess what the English meant.
 Correct mistakes naturally in the conversation, like a helpful friend would, but do NOT explain them in the reply.
 Then provide your analysis as valid JSON with this exact structure:
 {
-  "npcReply": "Your ${targetLang} response — ${targetLang.toUpperCase()} ONLY, never English",
+  "npcReply": "Your Danish response — DANISH ONLY, never English",
   "corrections": [
     {
       "original": "what the user said wrong",
@@ -218,15 +213,15 @@ Then provide your analysis as valid JSON with this exact structure:
 }
 
 Important RULES:
-- npcReply MUST be ${targetLang} ONLY. Never English. Never translate. Never explain in English.
-- If the user writes in English, respond in ${targetLang} confused: ${confusedReply}
-- If the user writes gibberish, respond naturally confused in ${targetLang}
+- npcReply MUST be Danish ONLY. Never English. Never translate. Never explain in English.
+- If the user writes in English, respond in Danish confused: ${confusedReply}
+- If the user writes gibberish, respond naturally confused in Danish
 - corrections are for JSON analysis only — do NOT mention them in npcReply
-- npcReply must feel like a real conversation with a ${countryName === "Spain" ? "Spaniard" : "Dane"}, not a lesson
+- npcReply must feel like a real conversation with a Dane, not a lesson
 - If the user made ANY mistake, ALWAYS include it in the corrections array
-- corrections should be [] ONLY if the user wrote perfect ${targetLang}
-- score 0-100: reflect the user's ${targetLang} proficiency in this message. SCORE STRICTLY: a simple "hello" is 10-20. A full sentence with correct grammar is 60-80. Complex, nuanced language is 80-100. Never give 100 unless the user produced advanced, error-free Danish/Spanish with good vocabulary.
-- If the user says "farvel" or goodbye, set passed to true ONLY if the user demonstrated sufficient ${targetLang} for their level (${level}) in this scenario.
+- corrections should be [] ONLY if the user wrote perfect Danish
+- score 0-100: reflect the user's Danish proficiency in this message. SCORE STRICTLY: a simple "hello" is 10-20. A full sentence with correct grammar is 60-80. Complex, nuanced language is 80-100. Never give 100 unless the user produced advanced, error-free Danish with good vocabulary.
+- If the user says "farvel" or goodbye, set passed to true ONLY if the user demonstrated sufficient Danish for their level (${level}) in this scenario.
   Evaluate: did they use appropriate vocabulary? Did they form understandable sentences?
   Did they complete the scenario goal? Was it a meaningful conversation?
   CONTEXT CHECK: Did the user actually talk about the scenario topic?

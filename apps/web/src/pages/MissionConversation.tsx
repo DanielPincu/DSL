@@ -186,7 +186,7 @@ export default function MissionConversation() {
         <div className="sticky top-0 z-10 bg-white/90 dark:bg-danish-dark/90 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 px-4 py-3">
           <div className="flex items-center justify-center">
             <span className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-              💡 Say <kbd className="px-2 py-0.5 rounded-lg bg-white dark:bg-gray-700 font-mono text-sm font-semibold text-danish-red border-2 border-danish-red/30 dark:border-danish-red/50 shadow-sm">{conversation?.language === "es" ? "Hola" : "Hej"}</kbd> to start the conversation
+              💡 Say <kbd className="px-2 py-0.5 rounded-lg bg-white dark:bg-gray-700 font-mono text-sm font-semibold text-danish-red border-2 border-danish-red/30 dark:border-danish-red/50 shadow-sm">Hej</kbd> to start the conversation
             </span>
           </div>
         </div>
@@ -205,7 +205,7 @@ export default function MissionConversation() {
               );
             })()}
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400">
-              💡 Say <kbd className="px-1 py-0.5 rounded bg-white dark:bg-gray-700 font-mono text-[10px] border border-gray-300 dark:border-gray-600">{conversation?.language === "es" ? "adiós" : "farvel"}</kbd> to finish
+              💡 Say <kbd className="px-1 py-0.5 rounded bg-white dark:bg-gray-700 font-mono text-[10px] border border-gray-300 dark:border-gray-600">farvel</kbd> to finish
             </span>
           </div>
         </div>
@@ -279,7 +279,7 @@ export default function MissionConversation() {
               {notPassedReason}
             </p>
             <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-              Keep practicing and try "{conversation?.language === "es" ? "adiós" : "farvel"}" again when you're ready!
+              Keep practicing and try "farvel" again when you're ready!
             </p>
           </div>
         )}
@@ -363,7 +363,7 @@ export default function MissionConversation() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={conversation?.language === "es" ? "Escribe en español... (Write in Spanish)" : "Skriv på dansk... (Write in Danish)"}
+              placeholder="Skriv på dansk... (Write in Danish)"
               className="input flex-1"
               disabled={sending}
               autoFocus

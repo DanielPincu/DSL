@@ -11,7 +11,7 @@ router.post('/register', validate(registerSchema), register);
 router.post('/login', validate(loginSchema), login);
 router.post('/logout', authMiddleware, logout);
 router.get('/me', authMiddleware, getMe);
-router.patch('/language', authMiddleware, validate(z.object({ language: z.enum(['da', 'es']) })), switchLanguage);
+router.patch('/language', authMiddleware, validate(z.object({ language: z.enum(['da']) })), switchLanguage);
 router.patch('/level', authMiddleware, validate(z.object({ level: z.enum(['A1', 'A2', 'B1', 'B2', 'C1']) })), setLevel);
 
 export default router;

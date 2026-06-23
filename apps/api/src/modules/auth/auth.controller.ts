@@ -23,7 +23,7 @@ function setTokenCookie(res: Response, token: string): void {
 export async function register(req: AuthRequest, res: Response): Promise<void> {
   try {
     const { email, password, name, language } = req.body;
-    const lang = (['da', 'es'].includes(language) ? language : 'da') as 'da' | 'es';
+    const lang = (['da'].includes(language) ? language : 'da') as 'da';
 
     const existing = await User.findOne({ email });
     if (existing) {
@@ -39,7 +39,6 @@ export async function register(req: AuthRequest, res: Response): Promise<void> {
       activeLanguage: lang,
       progress: {
         da: { selectedLevel: 'A1', strengths: [], weaknesses: [] },
-        es: { selectedLevel: 'A1', strengths: [], weaknesses: [] },
       },
     });
     const token = generateToken(user._id.toString());
@@ -111,7 +110,7 @@ export async function setLevel(req: AuthRequest, res: Response): Promise<void> {
 export async function switchLanguage(req: AuthRequest, res: Response): Promise<void> {
   try {
     const { language } = req.body;
-    if (!['da', 'es'].includes(language)) {
+    if (!['da'].includes(language)) {
       res.status(400).json({ success: false, error: 'Invalid language' });
       return;
     }
@@ -125,7 +124,7 @@ export async function switchLanguage(req: AuthRequest, res: Response): Promise<v
       user.progress = user.progress || {};
       user.progress[language] = { selectedLevel: 'A1', strengths: [], weaknesses: [] };
     }
-    user.activeLanguage = language as 'da' | 'es';
+    user.activeLanguage = language as 'da';
     await user.save();
     res.json({ success: true, data: user.toJSON() });
   } catch (error) {

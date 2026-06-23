@@ -23,17 +23,17 @@ export const MISSION_CATEGORIES = [
 ] as const;
 export type MissionCategory = (typeof MISSION_CATEGORIES)[number];
 
-export const LANGUAGES = ['da', 'es'] as const;
+// Add new language codes here to extend (e.g., ['da', 'de', 'fr'])
+export const LANGUAGES = ['da'] as const;
 export type Language = (typeof LANGUAGES)[number];
 
+// Add entries here when adding a new language
 export const LANGUAGE_LABELS: Record<Language, string> = {
   da: 'Dansk',
-  es: 'Español',
 };
 
 export const LANGUAGE_FLAGS: Record<Language, string> = {
   da: '🇩🇰',
-  es: '🇪🇸',
 };
 
 // User — per-language progress

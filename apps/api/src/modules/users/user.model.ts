@@ -25,7 +25,7 @@ const userSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true, select: false },
     name: { type: String, required: true, trim: true },
-    activeLanguage: { type: String, enum: ['da', 'es'], default: 'da' },
+    activeLanguage: { type: String, enum: ['da'], default: 'da' },
     progress: { type: Schema.Types.Mixed, default: {} },
   },
   {
@@ -37,7 +37,7 @@ const userSchema = new Schema<IUser>(
         obj.id = obj._id?.toString();
         if (!obj.progress) obj.progress = {};
         // Ensure default progress exists
-        for (const lang of ['da', 'es']) {
+        for (const lang of ['da']) {
           if (!(obj.progress as Record<string, unknown>)[lang]) {
             (obj.progress as Record<string, unknown>)[lang] = { selectedLevel: 'A1', strengths: [], weaknesses: [] };
           }

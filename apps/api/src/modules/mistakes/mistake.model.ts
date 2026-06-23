@@ -20,7 +20,7 @@ const mistakeSchema = new Schema<IMistake>(
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     missionId: { type: Schema.Types.ObjectId, ref: 'Mission', required: true },
     conversationId: { type: Schema.Types.ObjectId, ref: 'Conversation' },
-    language: { type: String, enum: ['da', 'es'], required: true, default: 'da' },
+    language: { type: String, enum: ['da'], required: true, default: 'da' },
     originalText: { type: String, required: true },
     correctedText: { type: String, required: true },
     explanation: { type: String, required: true },

@@ -54,7 +54,7 @@ export default function Profile() {
           </div>
           <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3">
             <p className="text-gray-500 dark:text-gray-400">Language</p>
-            <p className="font-semibold text-gray-900 dark:text-white capitalize">{user.activeLanguage === 'es' ? 'Español' : 'Dansk'}</p>
+            <p className="font-semibold text-gray-900 dark:text-white capitalize">Dansk</p>
           </div>
         </div>
       </div>

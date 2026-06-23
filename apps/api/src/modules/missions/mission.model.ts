@@ -21,7 +21,7 @@ const missionSchema = new Schema<IMission>(
   {
     title: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
-    language: { type: String, enum: ['da', 'es'], required: true, default: 'da' },
+    language: { type: String, enum: ['da'], required: true, default: 'da' },
     category: {
       type: String,
       enum: ['health', 'housing', 'shopping', 'work', 'social',
