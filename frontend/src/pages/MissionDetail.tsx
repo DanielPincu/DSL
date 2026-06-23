@@ -76,7 +76,7 @@ export default function MissionDetail() {
 
   if (error && !mission) {
     return (
-      <div className="max-w-3xl mx-auto text-center py-20">
+      <div className="text-center py-20">
         <span className="text-5xl">🔒</span>
         <p className="mt-4 text-gray-500">{error}</p>
         <button onClick={() => navigate('/missions')} className="btn-primary mt-4">
@@ -91,7 +91,7 @@ export default function MissionDetail() {
   const activeLevel = user ? getActiveLevel(user, user.activeLanguage) : null;
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div>
       <button
         onClick={() => navigate('/missions')}
         className="btn-ghost mb-4 text-sm"

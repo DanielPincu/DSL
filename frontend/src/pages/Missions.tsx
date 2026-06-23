@@ -72,7 +72,7 @@ export default function Missions() {
   if (loading) return <LoadingSpinner text="Loading missions..." />;
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
         <div>

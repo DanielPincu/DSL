@@ -162,7 +162,7 @@ export default function MissionConversation() {
   const missionName = convMission && typeof convMission === 'object' ? (convMission as { npcName: string }).npcName : '';
 
   return (
-    <div className="max-w-4xl mx-auto h-[calc(100vh-4rem)] flex flex-col">
+    <div className="h-[calc(100vh-4rem)] flex flex-col">
       {/* Header */}
       <div className="bg-white dark:bg-danish-card border-b border-gray-200 dark:border-gray-800 px-4 py-3 flex items-center gap-3">
         <button
