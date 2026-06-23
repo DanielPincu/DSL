@@ -1,16 +1,25 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api/client';
 import { getActiveLevel, type CEFRLevel, CEFR_LEVELS } from '@dls/shared';
 
 export default function Profile() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, logout } = useAuth();
+  const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
+
+  // Reset state
   const [showReset, setShowReset] = useState(false);
   const [resetPassword, setResetPassword] = useState('');
   const [resetting, setResetting] = useState(false);
+
+  // Delete account state
+  const [showDelete, setShowDelete] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   if (!user) return null;
 
@@ -50,6 +59,21 @@ export default function Profile() {
       showMsg(msg, 'error');
     } finally {
       setResetting(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!deletePassword) return;
+    setDeleting(true);
+    showMsg('');
+    try {
+      await api.post('/auth/delete-account', { password: deletePassword });
+      logout();
+      navigate('/login');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete account';
+      showMsg(msg, 'error');
+      setDeleting(false);
     }
   }
 
@@ -113,52 +137,105 @@ export default function Profile() {
         </p>
       </div>
 
-      {/* Reset Profile */}
-      <div className="card border-2 border-red-200 dark:border-red-900/50">
-        <h2 className="font-semibold text-red-600 dark:text-red-400 mb-2">⚠️ Danger Zone</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          Reset your profile to A1 and delete all conversations, attempts, and mistakes.
-          This cannot be undone.
-        </p>
+      {/* Danger Zone */}
+      <div className="card border-2 border-red-200 dark:border-red-900/50 space-y-6">
+        <h2 className="font-semibold text-red-600 dark:text-red-400">⚠️ Danger Zone</h2>
 
-        {!showReset ? (
-          <button
-            onClick={() => setShowReset(true)}
-            className="btn bg-red-600 text-white hover:bg-red-700"
-          >
-            Reset Profile
-          </button>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-red-600 dark:text-red-400">
-              Enter your password to confirm reset:
-            </p>
-            <input
-              type="password"
-              value={resetPassword}
-              onChange={(e) => setResetPassword(e.target.value)}
-              placeholder="Your password"
-              className="input"
-              autoFocus
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={handleReset}
-                disabled={!resetPassword || resetting}
-                className="btn bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {resetting ? 'Resetting...' : 'Confirm Reset'}
-              </button>
-              <button
-                onClick={() => { setShowReset(false); setResetPassword(''); }}
-                disabled={resetting}
-                className="btn bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-              >
-                Cancel
-              </button>
+        {/* Reset Profile */}
+        <div>
+          <h3 className="font-medium text-gray-900 dark:text-white mb-1">Reset Profile</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            Reset to A1 and delete all conversations, attempts, and mistakes. Your account stays.
+          </p>
+
+          {!showReset ? (
+            <button
+              onClick={() => setShowReset(true)}
+              className="btn bg-red-600 text-white hover:bg-red-700"
+            >
+              Reset Profile
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                Enter your password to confirm reset:
+              </p>
+              <input
+                type="password"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                placeholder="Your password"
+                className="input"
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleReset}
+                  disabled={!resetPassword || resetting}
+                  className="btn bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {resetting ? 'Resetting...' : 'Confirm Reset'}
+                </button>
+                <button
+                  onClick={() => { setShowReset(false); setResetPassword(''); }}
+                  disabled={resetting}
+                  className="btn bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
+        <hr className="border-gray-200 dark:border-gray-700" />
+
+        {/* Delete Account */}
+        <div>
+          <h3 className="font-medium text-gray-900 dark:text-white mb-1">Delete Account</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            Permanently delete your account and all associated data. This cannot be undone.
+          </p>
+
+          {!showDelete ? (
+            <button
+              onClick={() => setShowDelete(true)}
+              className="btn bg-red-600 text-white hover:bg-red-700"
+            >
+              Delete Account
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                Enter your password to confirm deletion:
+              </p>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                placeholder="Your password"
+                className="input"
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDelete}
+                  disabled={!deletePassword || deleting}
+                  className="btn bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleting ? 'Deleting...' : 'Confirm Delete'}
+                </button>
+                <button
+                  onClick={() => { setShowDelete(false); setDeletePassword(''); }}
+                  disabled={deleting}
+                  className="btn bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {message && (

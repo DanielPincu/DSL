@@ -190,3 +190,39 @@ export async function resetProfile(req: AuthRequest, res: Response): Promise<voi
     res.status(500).json({ success: false, error: 'Failed to reset profile' });
   }
 }
+
+export async function deleteAccount(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      res.status(400).json({ success: false, error: 'Password is required' });
+      return;
+    }
+
+    const user = await User.findById(req.userId).select('+passwordHash');
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+
+    const isValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isValid) {
+      res.status(403).json({ success: false, error: 'Incorrect password' });
+      return;
+    }
+
+    // Delete all associated data
+    await Promise.all([
+      Conversation.deleteMany({ userId: user._id }),
+      Attempt.deleteMany({ userId: user._id }),
+      Mistake.deleteMany({ userId: user._id }),
+      User.findByIdAndDelete(user._id),
+    ]);
+
+    res.clearCookie('token', { path: '/' });
+    res.json({ success: true, data: { message: 'Account deleted' } });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete account' });
+  }
+}
