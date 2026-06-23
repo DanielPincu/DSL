@@ -1,0 +1,29 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/deploy-frontend.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            cd /home/rtty/danish-life-simulator
+            git pull
+            cd frontend
+            npm ci
+            npm run build
+            echo '${{ secrets.VPS_PASSWORD }}' | sudo -S cp -r dist/* /var/www/html/
+            echo '${{ secrets.VPS_PASSWORD }}' | sudo -S chown -R www-data:www-data /var/www/html/

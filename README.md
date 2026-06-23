@@ -26,13 +26,23 @@ A full-stack web application that feels like a game rather than a traditional la
 
 ```
 danish-life-simulator/
-├── apps/
-│   ├── api/          # Express + TypeScript backend
-│   └── web/          # React + Vite + Tailwind frontend
-├── packages/
-│   └── shared/       # Shared TypeScript types
-├── package.json      # Root workspace config
-└── tsconfig.base.json
+├── backend/         # Express + TypeScript API
+│   ├── src/
+│   │   ├── config/       # Environment, database
+│   │   ├── middleware/    # Auth, error handling, validation
+│   │   └── modules/      # Auth, missions, conversations, etc.
+│   └── package.json
+├── frontend/        # React + Vite + Tailwind
+│   ├── src/
+│   │   ├── pages/        # Login, Dashboard, Missions, etc.
+│   │   ├── components/   # Layout, LoadingSpinner, ProtectedRoute
+│   │   ├── context/      # AuthContext
+│   │   └── api/          # API client
+│   └── package.json
+├── .github/workflows/
+│   ├── deploy-backend.yml
+│   └── deploy-frontend.yml
+└── deploy.sh
 ```
 
 ### Tech Stack
@@ -45,7 +55,6 @@ danish-life-simulator/
 | Auth | JWT with httpOnly cookies, bcrypt |
 | AI | DeepSeek API (with provider abstraction) |
 | Validation | Zod |
-| Monorepo | npm workspaces |
 
 ---
 
@@ -62,6 +71,14 @@ danish-life-simulator/
 ```bash
 git clone <repo-url> danish-life-simulator
 cd danish-life-simulator
+
+# Backend
+cd backend
+cp .env.example .env
+npm install
+
+# Frontend (separate terminal)
+cd ../frontend
 npm install
 ```
 
@@ -78,11 +95,7 @@ npm install
 
 ### 4. Configure Environment
 
-```bash
-cp .env.example apps/api/.env
-```
-
-Edit `apps/api/.env`:
+Edit `backend/.env`:
 
 ```env
 # MongoDB
@@ -106,28 +119,23 @@ CLIENT_URL=http://localhost:5173
 ### 5. Seed the Database
 
 ```bash
+cd backend
 npm run seed
 ```
 
-This populates 10 missions:
-- Ring til lægen (Call the doctor)
-- Tal med din udlejer (Talk to landlord)
-- Spørg i Netto (Ask in Netto)
-- Forklar et bilproblem (Car problem)
-- Smalltalk med en kollega (Small talk)
-- Ring til internet support (Internet support)
-- Jobsamtale (Job interview)
-- På kommunen (Municipality office)
-- Bank aftale (Bank appointment)
-- Borgerskab interview (Citizenship interview)
+This populates 150 missions across all CEFR levels (A1–C1).
 
 ### 6. Start Development
 
 ```bash
+# Terminal 1 — Backend
+cd backend
+npm run dev
+
+# Terminal 2 — Frontend
+cd frontend
 npm run dev
 ```
-
-This starts both the API (port 3001) and web (port 5173) concurrently.
 
 - **Frontend:** http://localhost:5173
 - **API:** http://localhost:3001
@@ -137,14 +145,23 @@ This starts both the API (port 3001) and web (port 5173) concurrently.
 
 ## 📋 Available Scripts
 
+### Backend (`cd backend`)
+
 | Script | Description |
 |--------|-------------|
-| `npm run dev` | Start both API and web in dev mode |
-| `npm run dev:api` | Start API only |
-| `npm run dev:web` | Start web only |
-| `npm run build` | Build all packages |
-| `npm run lint` | Type-check all packages |
+| `npm run dev` | Start API in dev mode with hot reload |
+| `npm run build` | Compile TypeScript |
+| `npm run start` | Run compiled production build |
 | `npm run seed` | Seed missions to database |
+| `npm run lint` | Type-check |
+
+### Frontend (`cd frontend`)
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start Vite dev server |
+| `npm run build` | Type-check and bundle for production |
+| `npm run preview` | Preview production build |
 
 ---
 
@@ -326,7 +343,7 @@ The project is structured to easily add:
 
 **Seed fails**
 - Ensure MongoDB is running and accessible
-- Run `npm run build` first to compile shared types
+- The seed script compiles on-the-fly with tsx — no build step needed
 
 **AI responses are mock**
 - Set `DEEPSEEK_API_KEY` to a valid key in `.env`

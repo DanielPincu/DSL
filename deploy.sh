@@ -53,7 +53,7 @@ read -p "JWT Secret (random string): " JWT_SECRET
 read -p "Server domain or IP: " DOMAIN
 
 if [ -n "$MONGO_URI" ]; then
-  cat > apps/api/.env << EOF
+  cat > backend/.env << EOF
 MONGO_URI=$MONGO_URI
 DB_NAME=danish-life-simulator
 JWT_SECRET=${JWT_SECRET:-dev-secret-$(date +%s)}
@@ -69,16 +69,18 @@ fi
 
 # ─── 5. Install dependencies ───
 step "Installing dependencies"
-cd "$APP_DIR"
+cd "$APP_DIR/backend"
+npm install
+cd "$APP_DIR/frontend"
 npm install
 log "Dependencies installed"
 
 # ─── 6. Build ───
 step "Building"
-cd "$APP_DIR"
-npx tsc -p packages/shared/tsconfig.json 2>/dev/null || true
-cd apps/api && npx tsc 2>/dev/null || true && cd ..
-cd apps/web && npx vite build 2>/dev/null || true && cd ..
+cd "$APP_DIR/backend"
+npm run build
+cd "$APP_DIR/frontend"
+npm run build
 log "Build complete"
 
 # ─── 7. Seed database ───
@@ -86,7 +88,7 @@ step "Database"
 if [ -n "$MONGO_URI" ]; then
   read -p "Seed database with missions? (y/n): " SEED
   if [ "$SEED" = "y" ]; then
-    cd "$APP_DIR/apps/api" && npx tsx src/seed.ts
+    cd "$APP_DIR/backend" && npx tsx src/seed.ts
     log "Database seeded"
   fi
 fi
@@ -100,7 +102,7 @@ fi
 
 cd "$APP_DIR"
 pm2 delete dls-api 2>/dev/null || true
-pm2 start apps/api/src/index.ts --name dls-api --interpreter npx --interpreter-args tsx
+pm2 start backend/dist/index.js --name dls-api
 pm2 save
 pm2 startup 2>/dev/null | tail -1
 log "Application started with PM2"
@@ -111,22 +113,31 @@ if command -v nginx &>/dev/null; then
   read -p "Set up Nginx reverse proxy? (y/n): " NGINX
   if [ "$NGINX" = "y" ]; then
     read -p "Domain name (e.g. example.com): " NGINX_DOMAIN
-    cat > /etc/nginx/sites-available/danish-life << EOF
+    # Frontend is served from /var/www/html by the deploy pipeline
+    # Backend API runs on port 3001
+    cat > /etc/nginx/sites-available/danish-life << 'EOF'
 server {
     listen 80;
-    server_name ${NGINX_DOMAIN:-$DOMAIN};
+    server_name _;
     client_max_body_size 10m;
 
+    root /var/www/html;
+    index index.html;
+
     location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api/ {
         proxy_pass http://127.0.0.1:3001;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
     }
 }
 EOF
