@@ -65,9 +65,10 @@ export default function Missions() {
 
   const activeLevel = user ? getActiveLevel(user, user.activeLanguage) : null;
   const userPassedLevels = user?.passedLevelQuizzes || [];
+  const storagePassed: string[] = JSON.parse(localStorage.getItem('passedLevels') || '[]');
 
-  // Combine API-fetched passedLevels with user object data (fallback)
-  const allPassed = Array.from(new Set([...passedLevels, ...userPassedLevels]));
+  // Combine all sources: API, user object, localStorage (most reliable)
+  const allPassed = Array.from(new Set([...passedLevels, ...userPassedLevels, ...storagePassed]));
 
   if (loading) return <LoadingSpinner text="Loading missions..." />;
 

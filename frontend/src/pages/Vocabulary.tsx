@@ -28,7 +28,7 @@ type Tab = 'browse' | 'flashcards' | 'quiz';
 
 export default function Vocabulary() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const userLevel = user ? getActiveLevel(user, user.activeLanguage) : 'A1';
   const [tab, setTab] = useState<Tab>('browse');
   const [words, setWords] = useState<VocabWord[]>([]);
@@ -217,10 +217,17 @@ export default function Vocabulary() {
           setPassedLevels((prev) => prev.includes(quizLevel) ? prev : [...prev, quizLevel]);
         }
       } catch (e) {
-        showMsg('Failed to save quiz result — but you passed! Try visiting Missions again.');
-        // Still mark locally so the user doesn't get stuck
+        showMsg('Failed to save quiz result — but you passed!');
         setPassedLevels((prev) => prev.includes(quizLevel) ? prev : [...prev, quizLevel]);
       }
+      // Save to localStorage as reliable fallback
+      const saved = JSON.parse(localStorage.getItem('passedLevels') || '[]');
+      if (!saved.includes(quizLevel)) {
+        saved.push(quizLevel);
+        localStorage.setItem('passedLevels', JSON.stringify(saved));
+      }
+      // Refresh user so Missions page also sees it via API if it saved
+      refreshUser();
       setSubmitting(false);
     }
   }
