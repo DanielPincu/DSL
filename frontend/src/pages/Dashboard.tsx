@@ -206,6 +206,46 @@ export default function Dashboard() {
         </Link>
       </div>
 
+      {/* Pipeline tests */}
+      <div className="flex justify-center gap-4 pb-4">
+        <TestButton endpoint="/test" label="Test Backend" />
+        <TestButton endpoint="/test2" label="Test Frontend" />
+      </div>
+    </div>
+  );
+}
+
+function TestButton({ endpoint, label }: { endpoint: string; label: string }) {
+  const [result, setResult] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleTest() {
+    setLoading(true);
+    setResult(null);
+    try {
+      const data = await api.get<{ message: string }>(endpoint);
+      setResult(data.message);
+    } catch {
+      setResult('Error');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <button
+        onClick={handleTest}
+        disabled={loading}
+        className="btn bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 text-sm"
+      >
+        {loading ? 'Testing...' : label}
+      </button>
+      {result && (
+        <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+          {result}
+        </span>
+      )}
     </div>
   );
 }
