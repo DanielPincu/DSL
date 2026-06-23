@@ -64,7 +64,7 @@ export default function Missions() {
   }, []);
 
   const activeLevel = user ? getActiveLevel(user, user.activeLanguage) : null;
-  const userPassedLevels = (user as Record<string, unknown>)?.passedLevelQuizzes as string[] | undefined || [];
+  const userPassedLevels = user?.passedLevelQuizzes || [];
 
   // Combine API-fetched passedLevels with user object data (fallback)
   const allPassed = Array.from(new Set([...passedLevels, ...userPassedLevels]));

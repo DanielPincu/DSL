@@ -49,6 +49,7 @@ export interface User {
   name: string;
   activeLanguage: Language;
   progress: Record<string, LanguageProgress>;
+  passedLevelQuizzes?: string[];
   createdAt: string;
   updatedAt: string;
 }
