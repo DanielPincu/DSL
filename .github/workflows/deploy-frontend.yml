@@ -22,8 +22,8 @@ jobs:
           script: |
             cd /home/rtty/danish-life-simulator
             git pull
+            rm -rf node_modules packages apps
             cd frontend
-            npm ci
             npm run build
             echo '${{ secrets.VPS_PASSWORD }}' | sudo -S cp -r dist/* /var/www/html/
             echo '${{ secrets.VPS_PASSWORD }}' | sudo -S chown -R www-data:www-data /var/www/html/

@@ -22,7 +22,7 @@ jobs:
           script: |
             cd /home/rtty/danish-life-simulator
             git pull
+            rm -rf node_modules packages apps
             cd backend
-            npm ci
             npm run build
             pm2 restart dls-api
