@@ -26,5 +26,6 @@ jobs:
             rm -rf node_modules packages apps
             cd frontend
             npm run build
+            echo '${{ secrets.VPS_PASSWORD }}' | sudo -S rm -rf /var/www/html/assets/
             echo '${{ secrets.VPS_PASSWORD }}' | sudo -S cp -r dist/* /var/www/html/
             echo '${{ secrets.VPS_PASSWORD }}' | sudo -S chown -R www-data:www-data /var/www/html/
