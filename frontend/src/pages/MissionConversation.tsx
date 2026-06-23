@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
-import type { Message, Correction } from '../types';
+import type { Message, Correction, MissionVocab } from '../types';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 interface ChatMessage {
@@ -55,6 +55,9 @@ export default function MissionConversation() {
   const [notPassedReason, setNotPassedReason] = useState<string | null>(null);
   const [resetMessage, setResetMessage] = useState<string | null>(null);
   const [promoted, setPromoted] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const [vocab, setVocab] = useState<MissionVocab[]>([]);
+  const [vocabLoading, setVocabLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -179,7 +182,47 @@ export default function MissionConversation() {
             Completed
           </span>
         )}
+        {slug && !complete && (
+          <button
+            onClick={() => {
+              setShowHelp(!showHelp);
+              if (!showHelp && vocab.length === 0 && !vocabLoading) {
+                setVocabLoading(true);
+                api.get<{ vocabulary: MissionVocab[] }>(`/missions/${slug}`)
+                  .then((data) => setVocab(data.vocabulary || []))
+                  .catch(() => {})
+                  .finally(() => setVocabLoading(false));
+              }
+            }}
+            className="btn-ghost text-xs px-2 py-1"
+            title="Help with vocabulary"
+          >
+            💡 Help
+          </button>
+        )}
       </div>
+
+      {/* Vocabulary help panel */}
+      {showHelp && vocab.length > 0 && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800 px-4 py-3 max-h-60 overflow-y-auto">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide">
+              📚 Useful Phrases
+            </span>
+            <button onClick={() => setShowHelp(false)} className="text-xs text-blue-500 hover:text-blue-700">
+              Close ✕
+            </button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {vocab.map((v, i) => (
+              <div key={i} className="bg-white dark:bg-blue-900/40 rounded-lg px-3 py-2 text-xs">
+                <span className="font-medium text-gray-900 dark:text-white">{v.danish}</span>
+                <span className="text-gray-400 dark:text-gray-500 ml-2">— {v.english}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Starter tip — shown when conversation is empty */}
       {!complete && !resetMessage && messages.length === 0 && (
