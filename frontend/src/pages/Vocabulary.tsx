@@ -54,6 +54,7 @@ export default function Vocabulary() {
   const [quizCorrect, setQuizCorrect] = useState(0);
   const [quizDone, setQuizDone] = useState(false);
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
+  const [currentCorrect, setCurrentCorrect] = useState('');
   const [quizLevel, setQuizLevel] = useState<typeof userLevel>(userLevel);
   const [submitting, setSubmitting] = useState(false);
   const [quizPassed, setQuizPassed] = useState<boolean | null>(null);
@@ -166,6 +167,7 @@ export default function Vocabulary() {
   }
 
   function generateOptions(current: VocabWord, pool: VocabWord[]) {
+    setCurrentCorrect(current.english);
     const others = pool.filter((w) => w.id !== current.id).sort(() => Math.random() - 0.5);
     const opts = [current.english, ...others.slice(0, 3).map((w) => w.english)].sort(() => Math.random() - 0.5);
     setOptions(opts);
@@ -417,11 +419,12 @@ export default function Vocabulary() {
                 <p className="text-2xl font-bold text-gray-900 dark:text-white mb-6">{quizWords[quizIndex]?.danish}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto w-full">
                   {options.map((opt, i) => {
+                    const isCorrectAnswer = opt === currentCorrect;
+                    const isUserWrongPick = !isCorrectAnswer && opt === quizResults[quizResults.length-1]?.yourAnswer;
                     let cls = 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700';
-                    if (quizResult === 'correct' && opt === quizWords[quizIndex]?.english) cls = 'bg-green-100 dark:bg-green-900/30 border-green-400 dark:border-green-600';
-                    if (quizResult === 'wrong' && opt === quizWords[quizIndex]?.english) cls = 'bg-green-100 dark:bg-green-900/30 border-green-400 dark:border-green-600';
-                    if (quizResult === 'wrong' && opt !== quizWords[quizIndex]?.english && opt === quizResults[quizResults.length-1]?.yourAnswer) cls = 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700';
-                    else if (quizResult === 'wrong' && opt !== quizWords[quizIndex]?.english) cls = 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 opacity-40';
+                    if (quizResult && isCorrectAnswer) cls = 'bg-green-100 dark:bg-green-900/30 border-green-400 dark:border-green-600';
+                    else if (quizResult === 'wrong' && isUserWrongPick) cls = 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700';
+                    else if (quizResult === 'wrong') cls = 'bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 opacity-40';
                     return (
                       <button key={i} onClick={() => !quizResult && answerQuiz(opt)} disabled={!!quizResult}
                         className={`btn text-sm py-3 ${cls}`}>{opt}</button>
