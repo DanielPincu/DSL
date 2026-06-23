@@ -225,7 +225,7 @@ export default function Vocabulary() {
       {/* Tabs */}
       <div className="flex border-b border-gray-200 dark:border-gray-700">
         {(['browse', 'flashcards', 'quiz'] as Tab[]).map((t) => (
-          <button key={t} onClick={() => { setTab(t); if (t === 'flashcards') startFlashcards(); }}
+          <button key={t} onClick={() => { setTab(t); if (t === 'flashcards' && deck.length === 0) startFlashcards(); }}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors capitalize ${
               tab === t ? 'border-danish-red text-danish-red' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700'
             }`}
@@ -294,16 +294,14 @@ export default function Vocabulary() {
       {tab === 'flashcards' && (
         <div className="space-y-6">
           {deck.length === 0 ? (
-            <div className="text-center py-8 space-y-4">
-              <p className="text-gray-500 dark:text-gray-400">Pick a level to practice:</p>
-              <div className="flex justify-center gap-2 flex-wrap">
-                {CEFR_LEVELS.map((l) => (
-                  <button key={l} onClick={() => startFlashcards(l)}
-                    className={`btn text-sm ${l === userLevel ? 'bg-danish-red text-white ring-2 ring-danish-red/30' : 'bg-gray-100 dark:bg-gray-700'}`}>
-                    {l} ({words.filter((w) => w.level === l).length})
-                  </button>
-                ))}
-              </div>
+            <div className="text-center py-12 space-y-4">
+              <span className="text-6xl block">🃏</span>
+              <p className="text-gray-500 dark:text-gray-400">
+                Practice {userLevel} vocabulary with flashcards
+              </p>
+              <button onClick={() => startFlashcards()} className="btn-primary px-8 py-3 text-lg">
+                Play {userLevel} Flash
+              </button>
             </div>
           ) : (
             <>
