@@ -166,7 +166,7 @@ export default function MissionDetail() {
                     <button
                       key={i}
                       onClick={() => toggleCard(i)}
-                      className={`w-full text-left rounded-xl px-4 py-3 transition-all duration-200 ${
+                      className={`w-full text-left rounded-xl px-4 py-3 min-h-[64px] flex flex-col justify-center transition-all duration-200 ${
                         isFlipped
                           ? 'bg-green-50 dark:bg-green-900/20 border-2 border-green-300 dark:border-green-700'
                           : 'bg-gray-50 dark:bg-gray-800/50 border-2 border-transparent hover:border-danish-red/30 dark:hover:border-danish-red/50'

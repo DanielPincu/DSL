@@ -37,12 +37,14 @@ export default function Missions() {
   const [progress, setProgress] = useState<MissionLevelProgress | null>(null);
   const [activeConvs, setActiveConvs] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [passedLevels, setPassedLevels] = useState<string[]>([]);
 
   useEffect(() => {
     Promise.all([
       api.get<MissionsResponse>('/missions'),
       api.get<Conversation[]>('/conversations/me'),
-    ]).then(([missionsData, convsData]) => {
+      api.get<{ passedLevelQuizzes: string[] }>('/vocabulary/level-status'),
+    ]).then(([missionsData, convsData, levelData]) => {
       setMissions(missionsData.missions);
       setProgress(missionsData.progress);
 
@@ -56,6 +58,7 @@ export default function Missions() {
         }
       }
       setActiveConvs(activeMap);
+      setPassedLevels(levelData.passedLevelQuizzes);
     }).catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -106,8 +109,24 @@ export default function Missions() {
         </div>
       )}
 
+      {/* Level quiz gate */}
+      {activeLevel && !passedLevels.includes(activeLevel) && (
+        <div className="card border-2 border-danish-accent/30 dark:border-danish-accent/20 bg-danish-accent/5 mb-6 text-center py-8">
+          <span className="text-5xl block mb-4">📚</span>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+            Pass the {activeLevel} Vocabulary Quiz
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-md mx-auto">
+            Complete the level quiz with at least 50% correct to unlock {activeLevel} missions.
+          </p>
+          <Link to="/vocabulary" className="btn-primary">
+            Take {activeLevel} Quiz
+          </Link>
+        </div>
+      )}
+
       {/* Mission grid */}
-      {missions.length === 0 ? (
+      {activeLevel && !passedLevels.includes(activeLevel) ? null : missions.length === 0 ? (
         <div className="text-center py-20">
           <span className="text-5xl">🔍</span>
           <p className="mt-4 text-gray-500">No missions available at your level.</p>

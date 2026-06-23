@@ -8,6 +8,7 @@ export interface IUser extends Document {
   activeLanguage: Language;
   progress: Record<string, LanguageProgress>;
   learnedVocab: string[];
+  passedLevelQuizzes: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +30,7 @@ const userSchema = new Schema<IUser>(
     activeLanguage: { type: String, enum: ['da'], default: 'da' },
     progress: { type: Schema.Types.Mixed, default: {} },
     learnedVocab: [{ type: String }],
+    passedLevelQuizzes: [{ type: String }],
   },
   {
     timestamps: true,
