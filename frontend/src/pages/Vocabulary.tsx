@@ -113,9 +113,10 @@ export default function Vocabulary() {
   const learnedCount = words.filter((w) => w.learned).length;
 
   // ── Flashcards ──
-  function startFlashcards(level: CEFRLevel) {
-    setDeckLevel(level);
-    const pool = words.filter((w) => w.level === level).sort(() => Math.random() - 0.5);
+  function startFlashcards(level?: CEFRLevel) {
+    const lvl = level || userLevel;
+    setDeckLevel(lvl);
+    const pool = words.filter((w) => w.level === lvl).sort(() => Math.random() - 0.5);
     if (pool.length === 0) { showMsg('No words for this level'); return; }
     setDeck(pool);
     setCardIndex(0);
@@ -224,7 +225,7 @@ export default function Vocabulary() {
       {/* Tabs */}
       <div className="flex border-b border-gray-200 dark:border-gray-700">
         {(['browse', 'flashcards', 'quiz'] as Tab[]).map((t) => (
-          <button key={t} onClick={() => setTab(t)}
+          <button key={t} onClick={() => { setTab(t); if (t === 'flashcards') startFlashcards(); }}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors capitalize ${
               tab === t ? 'border-danish-red text-danish-red' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700'
             }`}
@@ -294,20 +295,15 @@ export default function Vocabulary() {
         <div className="space-y-6">
           {deck.length === 0 ? (
             <div className="text-center py-8 space-y-4">
-              <p className="text-gray-500 dark:text-gray-400">
-                Your current level is <strong>{userLevel}</strong>. Pick a level to practice:
-              </p>
-              <div className="flex justify-center gap-2">
+              <p className="text-gray-500 dark:text-gray-400">Pick a level to practice:</p>
+              <div className="flex justify-center gap-2 flex-wrap">
                 {CEFR_LEVELS.map((l) => (
                   <button key={l} onClick={() => startFlashcards(l)}
-                    className={`btn text-sm ${l === userLevel ? 'bg-danish-red text-white ring-2 ring-danish-red/30' : deckLevel === l ? 'bg-danish-red text-white' : 'bg-gray-100 dark:bg-gray-700'}`}>
+                    className={`btn text-sm ${l === userLevel ? 'bg-danish-red text-white ring-2 ring-danish-red/30' : 'bg-gray-100 dark:bg-gray-700'}`}>
                     {l} ({words.filter((w) => w.level === l).length})
                   </button>
                 ))}
               </div>
-              <button onClick={() => startFlashcards(userLevel)} className="btn-primary mt-2">
-                Start {userLevel} Flashcards
-              </button>
             </div>
           ) : (
             <>
