@@ -127,6 +127,7 @@ export default function Vocabulary() {
   function nextCard(gotIt: boolean) {
     const word = deck[cardIndex];
     if (gotIt && word && !word.learned) toggleLearned(word.id, true);
+    if (!gotIt && word && word.learned) toggleLearned(word.id, false);
     if (cardIndex < deck.length - 1) {
       setCardIndex((i) => i + 1);
       setFlipped(false);
