@@ -6,6 +6,7 @@ const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: '🏠' },
   { path: '/missions', label: 'Missions', icon: '🎯' },
   { path: '/mistakes', label: 'Mistakes', icon: '📝' },
+  { path: '/vocabulary', label: 'Vocabulary', icon: '📚' },
   { path: '/conversations', label: 'History', icon: '💬' },
   { path: '/profile', label: 'Profile', icon: '👤' },
 ];

@@ -7,6 +7,7 @@ export interface IUser extends Document {
   name: string;
   activeLanguage: Language;
   progress: Record<string, LanguageProgress>;
+  learnedVocab: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +28,7 @@ const userSchema = new Schema<IUser>(
     name: { type: String, required: true, trim: true },
     activeLanguage: { type: String, enum: ['da'], default: 'da' },
     progress: { type: Schema.Types.Mixed, default: {} },
+    learnedVocab: [{ type: String }],
   },
   {
     timestamps: true,

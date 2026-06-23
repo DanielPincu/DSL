@@ -14,6 +14,7 @@ import conversationRoutes from './modules/conversations/conversation.routes.js';
 import attemptRoutes from './modules/attempts/attempt.routes.js';
 import mistakeRoutes from './modules/mistakes/mistake.routes.js';
 import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
+import vocabularyRoutes from './modules/vocabulary/vocabulary.routes.js';
 
 // Validate env before starting
 validateEnv();
@@ -70,6 +71,7 @@ app.use('/api/conversations', conversationRoutes);
 app.use('/api/attempts', attemptRoutes);
 app.use('/api/mistakes', mistakeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/vocabulary', vocabularyRoutes);
 
 // 404 handler
 app.use((_req, res) => {

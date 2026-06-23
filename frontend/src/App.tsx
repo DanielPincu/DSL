@@ -10,6 +10,7 @@ import MissionDetail from './pages/MissionDetail';
 import MissionConversation from './pages/MissionConversation';
 import Mistakes from './pages/Mistakes';
 import ConversationHistory from './pages/ConversationHistory';
+import Vocabulary from './pages/Vocabulary';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -79,6 +80,16 @@ export default function App() {
           <ProtectedRoute>
             <Layout>
               <Mistakes />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/vocabulary"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Vocabulary />
             </Layout>
           </ProtectedRoute>
         }
