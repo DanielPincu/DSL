@@ -52,8 +52,10 @@ export default function Vocabulary() {
   const [options, setOptions] = useState<string[]>([]);
   const [quizResult, setQuizResult] = useState<'correct' | 'wrong' | null>(null);
   const [quizCorrect, setQuizCorrect] = useState(0);
+  const quizCorrectRef = useRef(0);
   const [quizDone, setQuizDone] = useState(false);
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
+  const quizResultsRef = useRef<QuizResult[]>([]);
   const [currentCorrect, setCurrentCorrect] = useState('');
   const [quizLevel, setQuizLevel] = useState<typeof userLevel>(userLevel);
   const [submitting, setSubmitting] = useState(false);
@@ -158,9 +160,11 @@ export default function Vocabulary() {
     setQuizWords(pool.slice(0, 20));
     setQuizIndex(0);
     setQuizCorrect(0);
+    quizCorrectRef.current = 0;
     setQuizDone(false);
     setQuizResult(null);
     setQuizResults([]);
+    quizResultsRef.current = [];
     setQuizPassed(null);
     generateOptions(pool[0], pool);
     setTab('quiz');
@@ -180,14 +184,11 @@ export default function Vocabulary() {
     const correct = word.english;
     const isCorrect = selected === correct;
     setQuizResult(isCorrect ? 'correct' : 'wrong');
-    if (isCorrect) setQuizCorrect((c) => c + 1);
+    if (isCorrect) { setQuizCorrect((c) => c + 1); quizCorrectRef.current++; }
 
-    setQuizResults((prev) => [...prev, {
-      danish: word.danish,
-      yourAnswer: selected,
-      correctAnswer: correct,
-      isCorrect,
-    }]);
+    const result = { danish: word.danish, yourAnswer: selected, correctAnswer: correct, isCorrect };
+    setQuizResults((prev) => [...prev, result]);
+    quizResultsRef.current = [...quizResultsRef.current, result];
   }
 
   function nextQuestion() {
@@ -202,7 +203,7 @@ export default function Vocabulary() {
   }
 
   async function finishQuiz() {
-    const score = Math.round((quizCorrect / 20) * 100);
+    const score = Math.round((quizCorrectRef.current / 20) * 100);
     setQuizScore(score);
     setQuizDone(true);
     setQuizPassed(score >= 50);
@@ -210,7 +211,7 @@ export default function Vocabulary() {
     if (score >= 50) {
       setSubmitting(true);
       try {
-        const answers = quizResults.map((r) => ({ danish: r.danish, selectedEnglish: r.yourAnswer }));
+        const answers = quizResultsRef.current.map((r) => ({ danish: r.danish, selectedEnglish: r.yourAnswer }));
         await api.post('/vocabulary/level-quiz', { level: quizLevel, answers });
         setPassedLevels((prev) => prev.includes(quizLevel) ? prev : [...prev, quizLevel]);
       } catch {}
