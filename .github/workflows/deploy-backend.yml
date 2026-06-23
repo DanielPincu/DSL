@@ -25,5 +25,6 @@ jobs:
             git reset --hard origin/main
             rm -rf node_modules packages apps
             cd backend
+            rm -rf dist
             npm run build
             pm2 restart dls-api
