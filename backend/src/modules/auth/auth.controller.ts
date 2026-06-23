@@ -150,6 +150,29 @@ export async function getMe(req: AuthRequest, res: Response): Promise<void> {
   }
 }
 
+export async function passQuiz(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const { level } = req.body;
+    if (!level) {
+      res.status(400).json({ success: false, error: 'level is required' });
+      return;
+    }
+    const user = await User.findById(req.userId);
+    if (!user) {
+      res.status(404).json({ success: false, error: 'User not found' });
+      return;
+    }
+    if (!user.passedLevelQuizzes.includes(level)) {
+      user.passedLevelQuizzes.push(level);
+      await user.save();
+    }
+    res.json({ success: true, data: { passedLevelQuizzes: user.passedLevelQuizzes } });
+  } catch (error) {
+    console.error('Pass quiz error:', error);
+    res.status(500).json({ success: false, error: 'Failed to save quiz pass' });
+  }
+}
+
 export async function resetProfile(req: AuthRequest, res: Response): Promise<void> {
   try {
     const { password } = req.body;

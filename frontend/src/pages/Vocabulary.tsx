@@ -211,22 +211,12 @@ export default function Vocabulary() {
     if (score >= 50) {
       setSubmitting(true);
       try {
-        const answers = quizResultsRef.current.map((r) => ({ danish: r.danish, selectedEnglish: r.yourAnswer }));
-        const res = await api.post<{ passed: boolean }>('/vocabulary/level-quiz', { level: quizLevel, answers });
-        if (res.passed) {
-          setPassedLevels((prev) => prev.includes(quizLevel) ? prev : [...prev, quizLevel]);
-        }
+        await api.post('/auth/pass-quiz', { level: quizLevel });
+        setPassedLevels((prev) => prev.includes(quizLevel) ? prev : [...prev, quizLevel]);
       } catch (e) {
-        showMsg('Failed to save quiz result — but you passed!');
+        showMsg('Could not save progress, but you passed!');
         setPassedLevels((prev) => prev.includes(quizLevel) ? prev : [...prev, quizLevel]);
       }
-      // Save to localStorage as reliable fallback
-      const saved = JSON.parse(localStorage.getItem('passedLevels') || '[]');
-      if (!saved.includes(quizLevel)) {
-        saved.push(quizLevel);
-        localStorage.setItem('passedLevels', JSON.stringify(saved));
-      }
-      // Refresh user so Missions page also sees it via API if it saved
       refreshUser();
       setSubmitting(false);
     }
