@@ -155,7 +155,7 @@ export default function Vocabulary() {
 
   // ── Quiz ──
   function startQuiz() {
-    const pool = words.filter((w) => w.level === quizLevel || true).sort(() => Math.random() - 0.5);
+    const pool = words.filter((w) => w.level === quizLevel).sort(() => Math.random() - 0.5);
     if (pool.length < 20) { showMsg('Not enough words — practice with Flashcards first!'); return; }
     setQuizWords(pool.slice(0, 20));
     setQuizIndex(0);
@@ -195,7 +195,7 @@ export default function Vocabulary() {
     if (quizIndex < quizWords.length - 1) {
       const next = quizIndex + 1;
       setQuizIndex(next);
-      const pool = words.filter((w) => w.level === quizLevel || true);
+      const pool = words.filter((w) => w.level === quizLevel);
       generateOptions(quizWords[next], pool);
     } else {
       finishQuiz();
