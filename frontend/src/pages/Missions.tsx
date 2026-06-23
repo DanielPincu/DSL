@@ -64,6 +64,10 @@ export default function Missions() {
   }, []);
 
   const activeLevel = user ? getActiveLevel(user, user.activeLanguage) : null;
+  const userPassedLevels = (user as Record<string, unknown>)?.passedLevelQuizzes as string[] | undefined || [];
+
+  // Combine API-fetched passedLevels with user object data (fallback)
+  const allPassed = Array.from(new Set([...passedLevels, ...userPassedLevels]));
 
   if (loading) return <LoadingSpinner text="Loading missions..." />;
 
@@ -110,7 +114,7 @@ export default function Missions() {
       )}
 
       {/* Level quiz gate */}
-      {activeLevel && !passedLevels.includes(activeLevel) && (
+      {activeLevel && !allPassed.includes(activeLevel) && (
         <div className="card border-2 border-danish-accent/30 dark:border-danish-accent/20 bg-danish-accent/5 mb-6 text-center py-8">
           <span className="text-5xl block mb-4">📚</span>
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
@@ -126,7 +130,7 @@ export default function Missions() {
       )}
 
       {/* Mission grid */}
-      {activeLevel && !passedLevels.includes(activeLevel) ? null : missions.length === 0 ? (
+      {activeLevel && !allPassed.includes(activeLevel) ? null : missions.length === 0 ? (
         <div className="text-center py-20">
           <span className="text-5xl">🔍</span>
           <p className="mt-4 text-gray-500">No missions available at your level.</p>

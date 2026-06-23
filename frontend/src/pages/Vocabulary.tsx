@@ -212,9 +212,15 @@ export default function Vocabulary() {
       setSubmitting(true);
       try {
         const answers = quizResultsRef.current.map((r) => ({ danish: r.danish, selectedEnglish: r.yourAnswer }));
-        await api.post('/vocabulary/level-quiz', { level: quizLevel, answers });
+        const res = await api.post<{ passed: boolean }>('/vocabulary/level-quiz', { level: quizLevel, answers });
+        if (res.passed) {
+          setPassedLevels((prev) => prev.includes(quizLevel) ? prev : [...prev, quizLevel]);
+        }
+      } catch (e) {
+        showMsg('Failed to save quiz result — but you passed! Try visiting Missions again.');
+        // Still mark locally so the user doesn't get stuck
         setPassedLevels((prev) => prev.includes(quizLevel) ? prev : [...prev, quizLevel]);
-      } catch {}
+      }
       setSubmitting(false);
     }
   }
