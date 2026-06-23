@@ -63,9 +63,13 @@ app.get('/api/health', (_req, res) => {
   });
 });
 
-// Test route
+// Test routes
 app.get('/api/test', (_req, res) => {
-  res.json({ success: true, data: { message: 'OK' } });
+  res.json({ success: true, data: { message: 'Backend OK' } });
+});
+
+app.get('/api/test2', (_req, res) => {
+  res.json({ success: true, data: { message: 'Frontend OK' } });
 });
 
 // API routes
