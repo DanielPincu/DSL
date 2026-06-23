@@ -186,17 +186,17 @@ export default function Vocabulary() {
       correctAnswer: correct,
       isCorrect,
     }]);
+  }
 
-    setTimeout(() => {
-      if (quizIndex < quizWords.length - 1) {
-        const next = quizIndex + 1;
-        setQuizIndex(next);
-        const pool = words.filter((w) => w.level === quizLevel || true);
-        generateOptions(quizWords[next], pool);
-      } else {
-        finishQuiz();
-      }
-    }, 1500);
+  function nextQuestion() {
+    if (quizIndex < quizWords.length - 1) {
+      const next = quizIndex + 1;
+      setQuizIndex(next);
+      const pool = words.filter((w) => w.level === quizLevel || true);
+      generateOptions(quizWords[next], pool);
+    } else {
+      finishQuiz();
+    }
   }
 
   async function finishQuiz() {
@@ -428,6 +428,15 @@ export default function Vocabulary() {
                     );
                   })}
                 </div>
+
+                {/* Next button */}
+                {quizResult && (
+                  <div className="mt-6">
+                    <button onClick={nextQuestion} className="btn-primary px-8 text-lg">
+                      {quizIndex < 19 ? 'Next →' : 'See Results'}
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}
